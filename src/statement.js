@@ -3,7 +3,7 @@ class Statement {
 		this.timestamp = new Date();
 		this.verbosity = (verbosity != null && typeof verbosity == "string") ? verbosity : "INFO";
 		this.tag = (tag != null && typeof tag == "string") ? tag : "TAG";
-		this.message = (message != null && typeof verbosity == "string") ? message : "";
+		this.message = (message != null && typeof message == "string") ? message : "";
 		return this;
 	}
 }
