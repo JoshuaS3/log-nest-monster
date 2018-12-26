@@ -1,6 +1,6 @@
 {
   "name": "lognestmonster",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Advanced logging for advanced programs.",
   "main": "index.js",
   "scripts": {
