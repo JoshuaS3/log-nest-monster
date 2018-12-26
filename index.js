@@ -3,7 +3,7 @@ const Logger = {
 	Event: require("./src/event.js"),
 	Statement: require("./src/statement.js"),
 	Queue: require("./src/queue.js"),
-	INIT: "INIT",
+	INFO: "INFO",
 	DEBUG: "DEBUG",
 	VERBOSE: "VERBOSE",
 	VERYVERBOSE: "VERYVERBOSE",
