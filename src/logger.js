@@ -1,10 +1,11 @@
 const statement = require("./statement.js");
-const event = require("./event.js")
+const event = require("./event.js");
+const queue = require("./queue.js");
 
 class Logger {
 	constructor(config) {
-		this.nameVar = "Logger";
-		this.locationsVar = {
+		this.name = "Logger";
+		this.locations = {
 			"node": "./log/node"
 		}
 		if (config) {
@@ -14,33 +15,23 @@ class Logger {
 			}
 			if (config.locations) {
 				if (typeof config.locations != "object") throw new Error(`Expected object, got ${typeof config.locations} for config.locations`);
-				this.locations = config.locations;
+				let locations = {};
+				Object.keys(config.locations).forEach(function (name) {
+					if (typeof name != "string") throw new Error(`Expected string, got ${typeof name} for config.locations key`);
+					let location = config.locations[name];
+					if (typeof location != "string") throw new Error(`Expected string, got ${typeof location} for config.locations value`);
+					locations[name] = new queue(name, location);
+				});
+				this.locations = locations;
 			}
 		}
 		return this;
 	}
 
-	get name() {return this.nameVar}
-	get locations() {return this.locationsVar}
-
-	set name(name) {this.nameVar = name}
-	set locations(newLocation) {this.addLocation(newLocation)}
-
-	addLocation(name, location) {
-		this.locationsVar[name] = location;
-		return this;
-	}
-
-	push() {
-		return this;
-	}
-
-	queue() {
-		return this;
-	}
-
-	write() {
-		return this;
+	queue(name) {
+		if (typeof name != "string") throw new Error(`Expect string, got ${typeof name} for name parameter`);
+		if (this.location[name] == null) throw new Error(`Requested queue, ${name}, is nonexistent`);
+		return this.locations[name];
 	}
 }
 
