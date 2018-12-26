@@ -30,7 +30,7 @@ class Logger {
 
 	queue(name) {
 		if (typeof name != "string") throw new Error(`Expect string, got ${typeof name} for name parameter`);
-		if (this.location[name] == null) throw new Error(`Requested queue, ${name}, is nonexistent`);
+		if (this.locations[name] == null) throw new Error(`Requested queue, ${name}, is nonexistent`);
 		return this.locations[name];
 	}
 }
