@@ -2,10 +2,38 @@
 
 _Advanced node.js logging for advanced programs._
 
-# log-nest-monster
+1. [lognestmonster](#lognestmonster)
+2. [Installation](#installation)
+3. [Classes](#classes)
+	1. [Logger.Logger](#logger)
+	2. [Logger.Queue](#queue)
+	3. [Logger.Statement](#statement)
+	4. [Logger.Event](#event)
+4. [Verbosity Levels](#verbosity-levels)
+5. [Sample Usage](#sample-usage)
+	1. [Notes](#notes-about-this-example)
+6. [Log Format](#log-format)
+7. [Contributors](#contributors)
+	1. [License](#license)
+
+# lognestmonster
+[![](https://img.shields.io/github/downloads/joshuas3/log-nest-monster/total.svg)](https://github.com/JoshuaS3/log-nest-monster)
+[![](https://img.shields.io/github/issues/joshuas3/log-nest-monster.svg)](https://github.com/JoshuaS3/log-nest-monster/issues)
+[![](https://img.shields.io/github/issues-pr/joshuas3/log-nest-monster.svg)](https://github.com/JoshuaS3/log-nest-monster/pulls)
+[![](https://img.shields.io/npm/v/lognestmonster.svg)](https://www.npmjs.com/package/lognestmonster)
+[![](https://img.shields.io/npm/l/lognestmonster.svg)](https://www.npmjs.com/package/lognestmonster)
+
 Most loggers available only use a _linear_ method of logging; there are verbosity levels and tags to narrow searches, but everything is still on the same level or plane nonetheless. The package `lognestmonster` is a similar type of logger, but it allows you to create multiple **layers** (or "**nests**") of log statements. This is useful because, although you may have to put in some extra organizational work on the code side, the log results are much more clean and thorough, boosting workflow efficiency. The user has absolute control over the way log statements are pushed to their log files.
 
 _Why should I use this?_ There are many projects that create insane amounts of data, almost impossible to sift through without a helper program. The purpose of this logging system is to be a time-saver. Although it takes more time to put it in place, it's almost immediately made up with the performance gain through using the new log format. One thing that's unique about this logger compared to others is that it allows multiple queues to be made, in turn allowing you to split up your data. For example, a Node web server could keep one log file that records everything that the backend does while it uses another to record user or traffic information for analytics. Parsing software could be used to read either one.
+
+## Installation
+
+In your npm initiated package, type the following:
+```
+npm i lognestmonster
+```
+That's it! You can now `require("lognestmonster")` and begin using it.
 
 ## Classes
 
@@ -305,3 +333,24 @@ This is exciting! You still have the ability to narrow down your results with ti
 Developer - Joshua 'joshuas3' Stockin \<joshstockin@gmail.com\> (https://www.github.com/joshuas3)
 
 Name - Patrik 'Patrola' Xop (https://github.com/PatrikXop)
+
+### License
+
+This software is licensed under version 3 of the GNU General Public License.
+
+    lognestmonster (c) 2018 Joshua 'joshuas3' Stockin
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+The license can be found [here](LICENSE).
