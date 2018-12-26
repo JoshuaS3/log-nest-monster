@@ -6,11 +6,17 @@ class FileHandler {
 		let currentFile = path.normalize(file);
 		let pathWorks = false;
 		let backToStart = false;
+		let loopCount = 0;
 		if (!fs.existsSync(path.normalize(file))) {
 			while (!pathWorks) {
+				loopCount++;
+				if (loopCount >= 256) throw new Error("Input file path cannot be created");
 				if (fs.existsSync(path.normalize(currentFile))) {
 					pathWorks = true;
+					loopCount = 0;
 					while (!backToStart) {
+						loopCount++;
+						if (loopCount >= 256) throw new Error("Input file path cannot be created");
 						if (!fs.existsSync(path.dirname(currentFile))) {
 							fs.mkdirSync(path.dirname(currentFile));
 						}
