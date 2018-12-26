@@ -5,7 +5,7 @@ const queue = require("./queue.js");
 class Logger {
 	constructor(config) {
 		this.name = "Logger";
-		this.locations = {
+		let locations = {
 			"node": "./log/node"
 		}
 		if (config) {
@@ -15,15 +15,15 @@ class Logger {
 			}
 			if (config.locations) {
 				if (typeof config.locations != "object") throw new TypeError(`Expected object, got ${typeof config.locations} for config.locations`);
-				let locations = {};
-				Object.keys(config.locations).forEach(function (name) {
-					let location = config.locations[name];
-					if (typeof location != "string") throw new TypeError(`Expected string, got ${typeof location} for config.locations value`);
-					locations[name] = new queue(name, location);
-				});
-				this.locations = locations;
+				locations = config.locations;
 			}
 		}
+		Object.keys(locations).forEach(function (name) {
+			let location = locations[name];
+			if (typeof location != "string") throw new TypeError(`Expected string, got ${typeof location} for location`);
+			locations[name] = new queue(name, location);
+		});
+		this.locations = locations;
 		return this;
 	}
 
