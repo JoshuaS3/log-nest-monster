@@ -17,7 +17,6 @@ class Logger {
 				if (typeof config.locations != "object") throw new TypeError(`Expected object, got ${typeof config.locations} for config.locations`);
 				let locations = {};
 				Object.keys(config.locations).forEach(function (name) {
-					if (typeof name != "string") throw new TypeError(`Expected string, got ${typeof name} for config.locations key`);
 					let location = config.locations[name];
 					if (typeof location != "string") throw new TypeError(`Expected string, got ${typeof location} for config.locations value`);
 					locations[name] = new queue(name, location);
