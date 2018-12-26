@@ -106,5 +106,4 @@ v 3 ITEMS
 */
 
 
-console.log(JSON.stringify(LoadEvent.statements));
-
+console.log(JSON.stringify(NodeLogQueue));
