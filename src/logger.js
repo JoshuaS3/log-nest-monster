@@ -10,16 +10,16 @@ class Logger {
 		}
 		if (config) {
 			if (config.name) {
-				if (typeof config.name != "string") throw new Error(`Expected string, got ${typeof config.name} for config.name`);
+				if (typeof config.name != "string") throw new TypeError(`Expected string, got ${typeof config.name} for config.name`);
 				this.name = config.name;
 			}
 			if (config.locations) {
-				if (typeof config.locations != "object") throw new Error(`Expected object, got ${typeof config.locations} for config.locations`);
+				if (typeof config.locations != "object") throw new TypeError(`Expected object, got ${typeof config.locations} for config.locations`);
 				let locations = {};
 				Object.keys(config.locations).forEach(function (name) {
-					if (typeof name != "string") throw new Error(`Expected string, got ${typeof name} for config.locations key`);
+					if (typeof name != "string") throw new TypeError(`Expected string, got ${typeof name} for config.locations key`);
 					let location = config.locations[name];
-					if (typeof location != "string") throw new Error(`Expected string, got ${typeof location} for config.locations value`);
+					if (typeof location != "string") throw new TypeError(`Expected string, got ${typeof location} for config.locations value`);
 					locations[name] = new queue(name, location);
 				});
 				this.locations = locations;
@@ -29,8 +29,8 @@ class Logger {
 	}
 
 	queue(name) {
-		if (typeof name != "string") throw new Error(`Expect string, got ${typeof name} for name parameter`);
-		if (this.locations[name] == null) throw new Error(`Requested queue, ${name}, is nonexistent`);
+		if (typeof name != "string") throw new TypeError(`Expect string, got ${typeof name} for name parameter`);
+		if (this.locations[name] == null) throw new TypeError(`Requested queue, ${name}, is nonexistent`);
 		return this.locations[name];
 	}
 }
