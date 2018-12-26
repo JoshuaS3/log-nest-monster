@@ -5,6 +5,7 @@ class Queue {
 		this.name = name;
 		this.location = location;
 		this.queue = [];
+		return this;
 	}
 
 	push() {
