@@ -16,8 +16,8 @@ class FileHandler {
 		if (typeof data != "string") throw new TypeError(`Expected string, got ${typeof data} for data`);
 		if (!fs.existsSync(path.dirname(file))) {
 			FileHandler.RecursiveMkdir(path.dirname(file));
-			fs.appendFileSync(file, data);
-		} else fs.appendFileSync(file, data);
+		}
+		fs.appendFileSync(file, data);
 	}
 }
 
