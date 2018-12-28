@@ -14,7 +14,8 @@ _Advanced node.js logging for advanced programs._
 	1. [Notes](#notes-about-this-example)
 6. [Log Format](#log-format)
 7. [Contributors](#contributors)
-	1. [License](#license)
+  1. [Issue Reporting/Contributing](#issue-reporting-contributing)
+	2. [License](#license)
 
 # lognestmonster
 [![](https://img.shields.io/npm/dt/lognestmonster.svg)](https://www.npmjs.com/package/lognestmonster)
@@ -29,7 +30,7 @@ _Why should I use this?_ There are many projects that create insane amounts of d
 
 ## Installation
 
-In your npm initiated package, type the following:
+In your npm initiated package, you can install this package with the following command:
 ```
 npm i lognestmonster
 ```
@@ -50,13 +51,13 @@ Creates and organizes your queues. `Logger` is the exported package. `Logger.Log
 
 Logger.Logger()
 ```javascript
-var MyLogger = new Logger.Logger(Object config);
+var MyLogger = new Logger.Logger([Object config]);
 ```
 Where `Object config` defaults to:
 ```json
-{"name": "Logger", "locations": {"node": "./log/node"}}
+{"name": "Logger", "locations": {"node": "./log/node"}, "compact": false}
 ```
-`name` serves no purpose other than identification. `locations` is used to create new queues, taking each key as the queue name and each value as the queue output location.
+`name` serves no purpose other than identification. `locations` is used to create new queues, taking each key as the queue name and each value as the queue output location. `compact` refers to the queue output (talked about later).
 
 Logger.Logger.queue()
 ```javascript
@@ -70,11 +71,17 @@ Manages log `Statement`s and `Event`s and how they're written to the final log f
 
 Logger.Queue()
 ```javascript
-let MyQueue = new Logger.Queue(string name, string location);
+let MyQueue = new Logger.Queue(string name, string location[, object config]);
 // note that parameters are the same format as key-value
 // pairs in `config.locations` of `Logger.Logger(config)`
 ```
+Where `Object config` defaults to:
+```json
+{"compact": false}
+```
 This creates the queue, taking `name` to be used as its ID and `location` as the path to where the log file should be created.
+
+When `compact` is set to `true` in the config argument, all keys of the Statement object are shortened when written as follows: `timestamp` becomes `tt`; `verbosity` becomes `v`; `tag` becomes `t`; `message`; becomes `m`.
 
 Logger.Queue.push()
 ```javascript
@@ -87,8 +94,11 @@ This adds log items or nests to the to-write queue. This returns the Queue objec
 Logger.Queue.write()
 ```javascript
 MyQueue.write();
+MyQueue.write(Statement statement);
+MyQueue.write(Event event);
+MyQueue.write(string verbosity, string tag, string message);
 ```
-This appends every queue value to the log file, emptying the queue. This returns the Queue object.
+This appends every queue value to the log file, emptying the queue. This returns the Queue object. If arguments are passed, they are written to the log independently of the order of the queue. This is not advised for anything but exception messages.
 
 ### Statement
 
@@ -137,7 +147,7 @@ These verbosity levels can be used to narrow down your search results when parsi
 
 ## Sample Usage
 
-Here's an example of how somebody would initiate the Logger, create and push items to the Queue, and write them to the log file. **PLEASE SEE THE NOTES ABOUT THIS EXAMPLE DOWN BELOW.**
+Here's an example of how somebody would initiate the Logger, create and push items to the Queue, and write them to the log file. **PLEASE SEE THE NOTES ABOUT THIS EXAMPLE DOWN BELOW.** You can play with something similar in the package's included `tests/test.js` file.
 ```javascript
 // Require the package
 const Logger = require("lognestmonster");
@@ -148,6 +158,7 @@ Logger.Overseer = new Logger.Logger({
 	locations: {
 		"node": "./log/node" // Creates a queue named `node` that uses the path `./log/node`
 	},
+  "compact": false // Indicates that we want our log to follow the traditional Statement format
 });
 
 // Pushes a statement directly to the `node` queue
@@ -225,8 +236,9 @@ Regarding format, logs follow a JSON-like format, as follows:
 
 Because of the way the Queue objects push it (the most efficient way regarding computing power with changing/appending to files), you will have to do a bit of tweaking to get it in proper JSON format:
 
-1. Add a comma before every newline (except for the last one at the end of the file)
-2. Wrap everything in table brackets ('[' and ']')
+1. Add a comma after every newline
+2. Place a table open-bracket (`[`) at the beginning of the file
+3. Place a table close-bracket (`]`) at the end of the file
 
 This could be easily automated. Once finished, you get proper JSON (below), where each object `{}` is a Statement and each wrapping table `[]` is an Event (excluding the outermost one).
 
@@ -332,7 +344,13 @@ This is exciting! You still have the ability to narrow down your results with ti
 
 Developer - Joshua 'joshuas3' Stockin \<joshstockin@gmail.com\> (https://www.github.com/joshuas3)
 
-Name - Patrik 'Patrola' Xop (https://github.com/PatrikXop)
+Package Name - Patrik 'Patrola' Xop (https://github.com/PatrikXop)
+
+### Issue Reporting/Contributing
+
+You can report issues using GitHub's built-in repository [issue tracking feature](https://www.github.com/joshuas3/log-nest-monster/issues).
+
+You can contribute officially by [forking the repository and creating a pull request](https://www.github.com/joshuas3/log-nest-monster/compare).
 
 ### License
 
