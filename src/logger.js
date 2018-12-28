@@ -8,6 +8,7 @@ class Logger {
 		let locations = {
 			"node": "./log/node"
 		}
+		let compact = false;
 		if (config) {
 			if (config.name) {
 				if (typeof config.name != "string") throw new TypeError(`Expected string, got ${typeof config.name} for config.name`);
@@ -17,11 +18,15 @@ class Logger {
 				if (typeof config.locations != "object") throw new TypeError(`Expected object, got ${typeof config.locations} for config.locations`);
 				locations = config.locations;
 			}
+			if (config.compact) {
+				if (typeof config.compact != "boolean") throw new TypeError(`Expected boolean, got ${typeof config.compact} for config.compact`);
+				compact = config.compact;
+			}
 		}
 		Object.keys(locations).forEach(function (name) {
 			let location = locations[name];
 			if (typeof location != "string") throw new TypeError(`Expected string, got ${typeof location} for location`);
-			locations[name] = new queue(name, location);
+			locations[name] = new queue(name, location, {compact: compact});
 		});
 		this.locations = locations;
 		return this;
