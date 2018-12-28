@@ -1,4 +1,9 @@
-const Logger = require("../index.js");
+// This test file is written to test for forward-compatibility as
+// I update the package, having been written at the stage of
+// earliest functionality and stability. The hope is that as
+// new things are added to the package, old things won't break.
+
+const Logger = require("../index.js"); // Should be `lognestmonster` depending on how/where this is run from
 
 Logger.Overseer = new Logger.Logger({
 	name: "MyLogger",
