@@ -17,7 +17,7 @@ _Advanced node.js logging for advanced programs._
 	1. [License](#license)
 
 # lognestmonster
-[![](https://img.shields.io/github/downloads/joshuas3/log-nest-monster/total.svg)](https://github.com/JoshuaS3/log-nest-monster)
+[![](https://img.shields.io/npm/dt/lognestmonster.svg)](https://www.npmjs.com/package/lognestmonster)
 [![](https://img.shields.io/github/issues/joshuas3/log-nest-monster.svg)](https://github.com/JoshuaS3/log-nest-monster/issues)
 [![](https://img.shields.io/github/issues-pr/joshuas3/log-nest-monster.svg)](https://github.com/JoshuaS3/log-nest-monster/pulls)
 [![](https://img.shields.io/npm/v/lognestmonster.svg)](https://www.npmjs.com/package/lognestmonster)
