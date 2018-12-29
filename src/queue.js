@@ -1,5 +1,6 @@
 const statement = require("./statement.js");
 const event = require("./event.js");
+const fs = require("fs");
 
 const FileHandler = require("./fileHandler.js");
 
@@ -23,7 +24,24 @@ class Queue {
 			}
 		}
 
+		let configFile = this.location + "/metadata.json";
+
 		FileHandler.AppendFile(this.filename, ""); // touch the file
+		FileHandler.AppendFile(configFile, "");
+
+		let configContent = fs.readFileSync(configFile).toString();
+
+		let queueConfig = [];
+		if (configContent != "") queueConfig = JSON.parse(configContent);
+
+		queueConfig.push(
+			{
+				"time": this.timestamp,
+				"log": this.filename
+			}
+		);
+
+		fs.writeFileSync(configFile, JSON.stringify(queueConfig));
 
 		return this;
 	}
