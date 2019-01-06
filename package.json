@@ -1,11 +1,12 @@
 {
   "name": "lognestmonster",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Advanced logging for advanced programs.",
   "main": "index.js",
   "scripts": {
     "test": "node tests/test.js",
-    "test1": "node tests/test.js"
+    "test1": "node tests/test.js",
+    "test2": "node tests/test2.js"
   },
   "repository": {
     "type": "git",

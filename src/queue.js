@@ -13,6 +13,7 @@ class Queue {
 		this.location = location;
 		this.filename = this.location + "/" + this.timestamp.toISOString().replace(/\:/g, "-").replace(/\./g, "-") + ".log";
 		this.queue = [];
+		this.fixed = false;
 
 		this.compact = false;
 		this.fileStarted = false;
@@ -47,6 +48,7 @@ class Queue {
 	}
 
 	push() {
+		if (this.fixed) throw new Error("Cannot write to the queue after the log is fixed");
 		if (arguments.length >= 3) this.queue.push(new statement(arguments[0], arguments[1], arguments[2]));
 		else if (arguments.length > 0) {
 			if (arguments[0] instanceof event) this.queue.push(arguments[0].statements); // object is an Event
@@ -57,6 +59,7 @@ class Queue {
 	}
 
 	write() {
+		if (this.fixed) throw new Error("Cannot write queue after the log is fixed");
 		let recursiveCompactFunction;
 		if (this.compact) {
 			recursiveCompactFunction = function(object) {
@@ -113,6 +116,13 @@ class Queue {
 			}
 		}
 		return this;
+	}
+
+	fix() {
+		this.fixed = true;
+		let logContent = fs.readFileSync(this.filename).toString();
+		logContent = "[" + logContent.replace(/\n/g, "\n,") + "]";
+		fs.writeFileSync(this.filename, logContent);
 	}
 }
 
