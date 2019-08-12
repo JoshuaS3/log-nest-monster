@@ -25,13 +25,17 @@ class lognestmonster
     struct QueueConfig
         char * out_dir // directory to output log files
 
-    virtual void * alloc(size_t size)                                       // implementation defaults to cstd malloc()
-    virtual void free(void * block)                                         // implementation defaults to cstd free()
-    virtual void * serialize(LogObject * obj)                               // implementation defaults to manual serialization of standard LogObject to allocated block
-    virtual bool write(void * serialized, size_t size, std::ostream stream) // implementation defaults to writing entire serialized block to stream
+    virtual void * alloc(size_t size)         // implementation defaults to cstd malloc()
+    virtual void free(void * block)           // implementation defaults to cstd free()
+    virtual void * serialize(LogObject * obj) // implementation defaults to manual serialization of standard LogObject to allocated block
+    virtual bool write(void * serialized, size_t size, std::ostream stream, bool append) // implementation defaults to writing entire serialized block to stream
+    virtual int delete(char * file_name)      // implementation defaults to cstd remove()
 
     interface LogObject
         Pushable * parent
+        char * temp_file
+        virtual bool save_temp()
+        virtual bool delete_temp()
 
     interface Pushable
     protected:
@@ -57,8 +61,8 @@ class lognestmonster
     public:
         int verbosity
         int timestamp
-        char * tag
-        char * message
+        std::string * tag
+        std::string * message
         constructor (int verbosity, char * tag, char * message)
 ```
 ### Semantics
@@ -144,7 +148,7 @@ v 1 ITEM
 
 ## Temporary Data Saving
 
-By the nature of a push-write logging library, there's a chance that some created Statements and Events might not be pushed and written before the program's exit, whether it hangs, crashes, throws a runtime exception, is SIGKILLed, or anything else. Seeing as the point of logging is to find and diagnose errors with ease, it'd be frustrating to lose critical last-second information like this. The solution: save temporary serialized data for every creation or change to Statements, Events, or Queues. Every logtree that ends in a Statement will have its own temporary data file; when a Statement is pushed to an Event, the Statement's file will be deleted and replaced into the greater Event file. See the following example for how data is separated into files:
+By the nature of a push-write logging library, there's a chance that some created Statements and Events might not be pushed and written before the program's exit, whether it hangs, crashes, throws a runtime exception, is SIGKILLed, or anything else. Seeing as the point of logging is to find and diagnose errors with ease, it'd be frustrating to lose critical last-second information like this. The solution: save temporary serialized data for every creation or change to Statements or Events. Every logtree that ends in a Statement will have its own temporary data file; when a Statement is pushed to an Event, the Statement's file will be deleted and replaced into the greater Event file. See the following example for how data is separated into files:
 
 ```
 Queue queue;
@@ -165,13 +169,13 @@ event.push(state1)
 queue.push(event)
 
 // Existing files:
-// queue.raw
+// event.raw
 // statement2.raw
 
 event.push(state2)
 
 // Existing files:
-// queue.raw (all log items now exist inside the queue)
+// event.raw (all log items now exist inside the event, in the queue)
 
 queue.write()
 
@@ -179,7 +183,7 @@ queue.write()
 // log12345.raw (consists of 2 statements inside 1 event)
 ```
 
-In reality, file names will likely contain timestamps, hashes, or some other form of identifiable metadata.
+In reality, file names will likely contain timestamps, hashes, UUIDs, or some other form of identifiable metadata.
 
 ## Copyright
 
