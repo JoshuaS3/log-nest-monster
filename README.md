@@ -76,7 +76,7 @@ In reference to data serialization, `parser` as used here is just a deserializer
 
 ## Serialization Format
 
-By default the library serializes log tree information in a special format. Events and Statements each have their own open and close tags, but in practice the only bytes that are sensitive to position are the Statement data and metadata bytes. Really, the only bytes *needed* to produce any log format are `0x0` and the following statement description bytes; a parser/deserializer could ignore Event openers and closers and still produce a readable log.
+By default the library serializes log tree information in a special format. This can be overriden by any programmer that uses the library.
 
 ### Events
 Open event with `0x2` and close with `0x3`. Statements or more events can be written inbetween these tags.
