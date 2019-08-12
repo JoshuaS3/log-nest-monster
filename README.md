@@ -1,374 +1,208 @@
 <img src="/static/logo.png" height="200px"/>
 
-_Advanced node.js logging for advanced programs._
+_Multilevel logging for advanced programs._
 
 1. [lognestmonster](#lognestmonster)
-2. [Installation](#installation)
-3. [Classes](#classes)
-	1. [Logger.Logger](#logger)
-	2. [Logger.Queue](#queue)
-	3. [Logger.Statement](#statement)
-	4. [Logger.Event](#event)
-4. [Verbosity Levels](#verbosity-levels)
-5. [Sample Usage](#sample-usage)
-	1. [Notes](#notes-about-this-example)
-6. [Log Format](#log-format)
-7. [Contributors](#contributors)
-  1. [Issue Reporting/Contributing](#issue-reporting-contributing)
-	2. [License](#license)
+2. [Library Class Structure](#library-class-structure)
+    1. [Semantics](#semantics)
+3. [Serialization Format](#serialization-format)
+    1. [Events](#events)
+    2. [Statements](#statements)
+        1. [Verbosity Level Enumeration](#verbosity-level-enumeration)
+    3. [Example](#example)
+4. [Temporary Data Saving](#temporary-data-saving)
+5. [Copyright](#copyright)
 
 # lognestmonster
-[![](https://img.shields.io/npm/dt/lognestmonster.svg)](https://www.npmjs.com/package/lognestmonster)
-[![](https://img.shields.io/github/issues/joshuas3/log-nest-monster.svg)](https://github.com/JoshuaS3/log-nest-monster/issues)
-[![](https://img.shields.io/github/issues-pr/joshuas3/log-nest-monster.svg)](https://github.com/JoshuaS3/log-nest-monster/pulls)
-[![](https://img.shields.io/npm/v/lognestmonster.svg)](https://www.npmjs.com/package/lognestmonster)
-[![](https://img.shields.io/npm/l/lognestmonster.svg)](https://www.npmjs.com/package/lognestmonster)
 
-Most loggers available only use a _linear_ method of logging; there are verbosity levels and tags to narrow searches, but everything is still on the same level or plane nonetheless. The package `lognestmonster` is a similar type of logger, but it allows you to create multiple **layers** (or "**nests**") of log statements. This is useful because, although you may have to put in some extra organizational work on the code side, the log results are much more clean and thorough, boosting workflow efficiency. The user has absolute control over the way log statements are pushed to their log files.
-
-_Why should I use this?_ There are many projects that create insane amounts of data, almost impossible to sift through without a helper program. The purpose of this logging system is to be a time-saver. Although it takes more time to put it in place, it's almost immediately made up with the performance gain through using the new log format. One thing that's unique about this logger compared to others is that it allows multiple queues to be made, in turn allowing you to split up your data. For example, a Node web server could keep one log file that records everything that the backend does while it uses another to record user or traffic information for analytics. Parsing software could be used to read either one.
-
-## Installation
-
-In your npm initiated package, you can install this package with the following command:
+## Library Class Structure
+This is subject to future change over security concerns regarding pointers and memory allocation.
 ```
-npm i lognestmonster
+class lognestmonster
+
+    enum VerbosityLevels {INFO, DEBUG, VERBOSE, VERYVERBOSE, WARNING, ERROR}
+
+    struct QueueConfig
+        char * out_dir // directory to output log files
+
+    virtual void * alloc(size_t size)                                       // implementation defaults to cstd malloc()
+    virtual void free(void * block)                                         // implementation defaults to cstd free()
+    virtual void * serialize(LogObject * obj)                               // implementation defaults to manual serialization of standard LogObject to allocated block
+    virtual bool write(void * serialized, size_t size, std::ostream stream) // implementation defaults to writing entire serialized block to stream
+
+    interface LogObject
+        Pushable * parent
+
+    interface Pushable
+    protected:
+        std::vector<LogObject *> pushed
+    public:
+        push(LogObject * obj)
+        push(int verbosity, char * tag, char * message) // implicitly creates a Statement and then pushes
+
+    class Queue : Pushable
+    public:
+        struct QueueConfig * _config
+        constructor (struct QueueConfig * config)
+        write()                                          // serializes, writes, and clears pushed LogObjects
+        write(LogObject * obj)                           // implicit push(), then write()
+        write(int verbosity, char * tag, char * message) // implicit Statement creation, push(), then write()
+
+    class Event : LogObject, Pushable
+    public:
+        constructor (LogObject * obj)                           // implicit push()
+        constructor (int verbosity, char * tag, char * message) // implicit Statement creation, then push()
+
+    class Statement : LogObject
+    public:
+        int verbosity
+        int timestamp
+        char * tag
+        char * message
+        constructor (int verbosity, char * tag, char * message)
 ```
-That's it! You can now `require("lognestmonster")` and begin using it.
+### Semantics
+A `Queue` handles data serialization and file writing to the main logtree file. Queue writing refers to sending serialized logtree data to the outstream. Queue pushing refers to adding an Event or Statement to the queue for future writing.
 
-## Classes
+An `Event` is a pushable list of statements or events, or the "nest". Event pushing refers to adding an Event or Statement to the parent's list.
 
-There are 4 classes offered by the package: `Logger`, the driving device that organizes everything; `Queue`, the class that actually pushes the log statements to their respective file; `Statement`, the actual log data (timestamp, verbosity, tag/invoker, message); and `Event`, a nest layer for `Statement`s or other `Event`s.
+A `Statement` is the data-containing log item with a timestamp, verbosity level, tag/invoker, and message.
 
-The following subsections assume that `lognestmonster` has been `require`d by node.js with the following code:
-```javascript
-const Logger = require("lognestmonster");
+In reference to data serialization, `parser` as used here is just a deserializer.
+
+## Serialization Format
+
+By default the library serializes log tree information in a special format. Events and Statements each have their own open and close tags, but in practice the only bytes that are sensitive to position are the Statement data and metadata bytes. Really, the only bytes *needed* to produce any log format are `0x0` and the following statement description bytes; a parser/deserializer could ignore Event openers and closers and still produce a readable log.
+
+### Events
+Open event with `0x2` and close with `0x3`. Statements or more events can be written inbetween these tags.
 ```
-
-### Logger
-
-Creates and organizes your queues. `Logger` is the exported package. `Logger.Logger` is the Logger class.
-
-Logger.Logger()
-```javascript
-var MyLogger = new Logger.Logger([Object config]);
-```
-Where `Object config` defaults to:
-```json
-{"name": "Logger", "locations": {"node": "./log/node"}, "compact": false}
-```
-`name` serves no purpose other than identification. `locations` is used to create new queues, taking each key as the queue name and each value as the queue output location. `compact` refers to the queue output (talked about later).
-
-Logger.Logger.queue()
-```javascript
-MyLogger.queue(string name);
-```
-This returns the appropriate `Queue` object for the provided `name`, assuming it was created with the `Logger` object.
-
-### Queue
-
-Manages log `Statement`s and `Event`s and how they're written to the final log file. Note that these are implicitly created with `Logger.Logger` when the `locations` object is properly provided in the `config` parameter of the `Logger.Logger` constructor.
-
-Logger.Queue()
-```javascript
-let MyQueue = new Logger.Queue(string name, string location[, object config]);
-// note that parameters are the same format as key-value
-// pairs in `config.locations` of `Logger.Logger(config)`
-```
-Where `Object config` defaults to:
-```json
-{"compact": false}
-```
-This creates the queue, taking `name` to be used as its ID and `location` as the path to where the log file should be created.
-
-When `compact` is set to `true` in the config argument, all keys of the Statement object are shortened when written as follows: `timestamp` becomes `tt`; `verbosity` becomes `v`; `tag` becomes `t`; `message`; becomes `m`.
-
-Logger.Queue.push()
-```javascript
-MyQueue.push(Statement statement);
-MyQueue.push(Event event);
-MyQueue.push(string verbosity, string tag, string message); // implicitly creates a `Statement` object
-```
-This adds log items or nests to the to-write queue. This returns the Queue object.
-
-Logger.Queue.write()
-```javascript
-MyQueue.write();
-MyQueue.write(Statement statement);
-MyQueue.write(Event event);
-MyQueue.write(string verbosity, string tag, string message);
-```
-This appends every queue value to the log file, emptying the queue. This returns the Queue object. If arguments are passed, they are written to the log independently of the order of the queue. This is not advised for anything but exception messages.
-
-### Statement
-
-This is the base log item where written log data is actually held.
-
-Logger.Statement()
-```javascript
-let MyStatement = Logger.Statement(string verbosity, string tag, string message);
+0x2 // open event
+    // more events or statements
+0x3 // close event
 ```
 
-The timestamp value is created automatically by the constructor.
+### Statements
+Open statement with `0x0` and close `0x1`.
 
-### Event
-
-This is the proper name for a nest. Essentially, it's just an array that can hold other `Event` objects and `Statement` objects, creating a tree.
-
-Logger.Event()
-```javascript
-let MyEvent = Logger.Event();
-let MyEvent = Logger.Event(Event event);
-let MyEvent = Logger.Event(Statement statement);
-let MyEvent = Logger.Event(string verbosity, string tag, string message);
-```
-Any arguments given are passed to `this.push()`.
-
-Logger.Event.push()
-```javascript
-MyEvent.push(Event event);
-MyEvent.push(Statement statement);
-MyEvent.push(string verbosity, string tag, string message);
-```
-This message pushes an `Event` or `Statement` as items in the nest. In the case that 3 strings are given as arguments, a `Statement` is implicitly created. This returns the Event object.
-
-## Verbosity Levels
-
-When creating a `Statement`, you can pass anything you'd like for the first `verbosity` string, although there are some ones preset by the package:
-
-`Logger.INFO`
-`Logger.DEBUG`
-`Logger.VERBOSE`
-`Logger.VERYVERBOSE`
-`Logger.WARNING`
-`Logger.ERROR`
-
-These verbosity levels can be used to narrow down your search results when parsing the log files.
-
-## Sample Usage
-
-Here's an example of how somebody would initiate the Logger, create and push items to the Queue, and write them to the log file. **PLEASE SEE THE NOTES ABOUT THIS EXAMPLE DOWN BELOW.** You can play with something similar in the package's included `tests/test.js` file.
-```javascript
-// Require the package
-const Logger = require("lognestmonster");
-
-// Creates the logger object. Placing the new Logger inside the package allows cross-file usage, so you only have to initiate once.
-Logger.Overseer = new Logger.Logger({
-	name: "Overseer",
-	locations: {
-		"node": "./log/node" // Creates a queue named `node` that uses the path `./log/node`
-	},
-  "compact": false // Indicates that we want our log to follow the traditional Statement format
-});
-
-// Pushes a statement directly to the `node` queue
-Logger.Overseer.queue("node").push(Logger.INFO, "PROCESS", "Process started");
-
-// Creates a new event and pushes a Statement to it
-let LoadEvent = new Logger.Event();
-LoadEvent.push(Logger.INFO, "INIT", "Acquiring needed top-level packages.");
-
-// Creates a new event and pushes multiple Statements to it
-let LowerNestedEvent = new Logger.Event();
-
-LowerNestedEvent.push(Logger.INFO, "INIT", "Loading fs...");
-LowerNestedEvent.push(Logger.DEBUG, "INIT", "fs loaded.");
-
-LowerNestedEvent.push(Logger.INFO, "INIT", "Loading http...");
-LowerNestedEvent.push(Logger.DEBUG, "INIT", "http loaded.");
-
-LowerNestedEvent.push(Logger.INFO, "INIT", "Loading jsonwebtoken...");
-LowerNestedEvent.push(Logger.DEBUG, "INIT", "jsonwebtoken loaded.");
-
-LowerNestedEvent.push(Logger.INFO, "INIT", "Loading lognestmonster...");
-LowerNestedEvent.push(Logger.DEBUG, "INIT", "lognestmonster loaded.");
-
-// Pushes the Event LowerNestedEvent to the Event LoadEvent
-LoadEvent.push(LowerNestedEvent);
-
-// Pushes another statement to LoadEvent
-LoadEvent.push(Logger.INFO, "INIT", "Finished.");
-
-// Pushes LoadEvent (a nest that consists of [Statement, Event, Statement] now) to the write queue
-Logger.Overseer.queue("node").push(LoadEvent);
-
-// Queue should now look like this: [Statement, Event]
-
-// Writes the queue, effectively emptying it into the log file
-Logger.Overseer.queue("node").write();
-```
-
-The above code creates the following JSON-like log output in the designated file:
-```json
-{"timestamp":"2018-12-26T18:08:37.654Z","verbosity":"INFO","tag":"PROCESS","message":"Process started"}
-[{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"INFO","tag":"INIT","message":"Acquiring needed top-level packages."},[{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"INFO","tag":"INIT","message":"Loading fs..."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"DEBUG","tag":"INIT","message":"fs loaded."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"INFO","tag":"INIT","message":"Loading http..."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"DEBUG","tag":"INIT","message":"http loaded."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"INFO","tag":"INIT","message":"Loading jsonwebtoken..."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"DEBUG","tag":"INIT","message":"jsonwebtoken loaded."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"INFO","tag":"INIT","message":"Loading lognestmonster..."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"DEBUG","tag":"INIT","message":"lognestmonster loaded."}],{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"INFO","tag":"INIT","message":"Finished."}]
-```
-
-_To see how to parse this data (putting it into proper JSON), see the Log Format section._
-
-### Notes about this example
-
-_Large projects_
-If your project spans multiple files, you could easily place your Logger object into the package itself, allowing the same Logger object to be accessed by other parts of your project. This is seen in the sample code with `Logger.Overseer = new Logger.Logger(...)`.
-
-_Repetition_
-There is some repetitive code; specifically, `Logger.Overseer.queue("node")`. Do note that this actually results in a `Queue` object, so you could easily make this its own variable like this:
-```javascript
-let NodeQueue = Logger.Overseer.queue("node");
-NodeQueue.push(...).write();
-```
-
-_Queue pushing and writing_
-When you're pushing multiple objects to a queue, be wary that they will stay there until the queue is written. Because everything is its own class, what you're really pushing is a _reference_ to the real object, so you can make changes to a pushed object after it has been pushed. As such, it is entirely possible to prematurely write a queue before an already-pushed `Event` or `Statement` is finished. It's good practice to immediately write the queue immediately after it has been pushed. Perhaps in the future there will be some functionality where a `Statement` or `Event` can be directly written instead of placed in the queue.
-
-_Push order_
-The developer has control over **everything** here. The order of your log file is the order that you push to your `Event`s and `Queue`. If I were to push a new Statement to `LoadEvent` in the middle of the pushes to `LowerNestedEvent`, it would show up on the log first because `LowerNestedEvent` isn't itself pushed to `LoadEvent` until later in the code. The order of the log file is 100% logical and in the developer's control, so it would be wise to write your code neatly with this in mind. This logging package doesn't do anything you don't tell it to.
-
-## Log Format
-
-Logs are controlled by `Queue` objects. Placed in the folder they're told, the logs should follow the ISO datetime format and have a `.log` file extension. Here's the name of a sample log file: `2018-12-26T18-08-37-653Z.log`
-
-Regarding format, logs follow a JSON-like format, as follows:
-```json
-{"timestamp":"2018-12-26T18:08:37.654Z","verbosity":"INFO","tag":"PROCESS","message":"Process started"}
-[{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"INFO","tag":"INIT","message":"Acquiring needed top-level packages."},[{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"INFO","tag":"INIT","message":"Loading fs..."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"DEBUG","tag":"INIT","message":"fs loaded."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"INFO","tag":"INIT","message":"Loading http..."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"DEBUG","tag":"INIT","message":"http loaded."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"INFO","tag":"INIT","message":"Loading jsonwebtoken..."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"DEBUG","tag":"INIT","message":"jsonwebtoken loaded."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"INFO","tag":"INIT","message":"Loading lognestmonster..."},{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"DEBUG","tag":"INIT","message":"lognestmonster loaded."}],{"timestamp":"2018-12-26T18:08:37.655Z","verbosity":"INFO","tag":"INIT","message":"Finished."}]
-```
-
-Because of the way the Queue objects push it (the most efficient way regarding computing power with changing/appending to files), you will have to do a bit of tweaking to get it in proper JSON format:
-
-1. Add a comma after every newline
-2. Place a table open-bracket (`[`) at the beginning of the file
-3. Place a table close-bracket (`]`) at the end of the file
-
-This could be easily automated. Once finished, you get proper JSON (below), where each object `{}` is a Statement and each wrapping table `[]` is an Event (excluding the outermost one).
-
-```json
-[
-  {
-    "timestamp": "2018-12-26T05:55:23.360Z",
-    "verbosity": "INFO",
-    "tag": "PROCESS",
-    "message": "Process started"
-  },
-  [
-    {
-      "timestamp": "2018-12-26T05:55:23.360Z",
-      "verbosity": "INFO",
-      "tag": "INIT",
-      "message": "Acquiring needed top-level packages."
-    },
-    [
-      {
-        "timestamp": "2018-12-26T05:55:23.360Z",
-        "verbosity": "INFO",
-        "tag": "INIT",
-        "message": "Loading fs..."
-      },
-      {
-        "timestamp": "2018-12-26T05:55:23.360Z",
-        "verbosity": "DEBUG",
-        "tag": "INIT",
-        "message": "fs loaded."
-      },
-      {
-        "timestamp": "2018-12-26T05:55:23.360Z",
-        "verbosity": "INFO",
-        "tag": "INIT",
-        "message": "Loading http..."
-      },
-      {
-        "timestamp": "2018-12-26T05:55:23.360Z",
-        "verbosity": "DEBUG",
-        "tag": "INIT",
-        "message": "http loaded."
-      },
-      {
-        "timestamp": "2018-12-26T05:55:23.360Z",
-        "verbosity": "INFO",
-        "tag": "INIT",
-        "message": "Loading jsonwebtoken..."
-      },
-      {
-        "timestamp": "2018-12-26T05:55:23.360Z",
-        "verbosity": "DEBUG",
-        "tag": "INIT",
-        "message": "jsonwebtoken loaded."
-      },
-      {
-        "timestamp": "2018-12-26T05:55:23.360Z",
-        "verbosity": "INFO",
-        "tag": "INIT",
-        "message": "Loading lognestmonster..."
-      },
-      {
-        "timestamp": "2018-12-26T05:55:23.360Z",
-        "verbosity": "DEBUG",
-        "tag": "INIT",
-        "message": "lognestmonster loaded."
-      }
-    ],
-    {
-      "timestamp": "2018-12-26T05:55:23.360Z",
-      "verbosity": "INFO",
-      "tag": "INIT",
-      "message": "Finished."
-    }
-  ]
-]
-```
-
-The above can be taken in by parsing software and create something similar to the following:
+1. 1 byte for an open statement tag
+2. 1 byte for a predefined verbosity level enum
+3. 4 bytes for an unsigned integer timestamp
+4. 1 byte for the length of the tag string
+5. 0-255 bytes for the tag string
+6. 2 bytes for the length of the message string
+7. 0-65535 bytes for the message string
+8. 1 byte for a close statement tag
 
 ```
-[[LOG FILE NAME]]
-[[LOG DATE]]
-[[LOG FILE SIZE]]
-[[LOG ITEM COUNT]]
+0x0
+    unsigned char verbosity
+    unsigned int timestamp
+    unsigned char tag_size
+    unsigned char[] tag
+    unsigned short message_size
+    unsigned char[] message
+0x1
+```
+A close statement tag is always needed in case the serializer method is overriden and provides extra data/metadata. If a close statement tag isn't written, a parser/deserializer won't be able to read a serialized logtree with extra data.
 
-TIMESTAMP - INFO - PROCESS - Process started
-v 3 ITEMS
-	TIMESTAMP - INFO - INIT - Acquiring needed top-level packages.
-	v 6 ITEMS
-		TIMESTAMP - INFO - INIT - Loading fs...
-		TIMESTAMP - DEBUG - INIT - fs loaded.
-		TIMESTAMP - INFO - INIT - Loading http...
-		TIMESTAMP - DEBUG - INIT - http loaded.
-		TIMESTAMP - INFO - INIT - Loading jsonwebtoken...
-		TIMESTAMP - DEBUG - INIT - jsonwebtoken loaded.
-	TIMESTAMP - INFO - INIT - Finished.
+#### Verbosity Level Enumeration
+The 6 verbosity level enums and their byte values are:
+```
+INFO        = 0
+DEBUG       = 1
+VERBOSE     = 2
+VERYVERBOSE = 3
+WARNING     = 4
+ERROR       = 5
 ```
 
-This is exciting! You still have the ability to narrow down your results with timestamps, verbosity levels, and tags/invokers, but now you have the organization with collapsable nests to not be overwhelmed with large amounts of data at the same time.
+### Example
+1 statement inside one 1 event:
+```
+0x2     // open event         1
+0x0     // open statement     1
+1565561768752 // timestamp    4
+0       // verbosity          1
+4       // tag_size           1
+"INIT"  // tag                4
+5       // message_size       2
+"HELLO" // message            5
+0x1     // close statement    1
+0x3     // close event        1
+        //                    21 total bytes for this log tree
+```
+With the sample log tree used here, the raw byte file totals 21 bytes. In use, a parser/deserializer could take this file and create output similar to the following:
+```
+Log: sample.raw
+File size: 21 bytes
+Content: 1 statement
 
-## Contributors
+v 1 ITEM
+    1565561768752 - INFO - INIT - HELLO
+```
 
-Developer - Joshua 'joshuas3' Stockin \<joshstockin@gmail.com\> (https://www.github.com/joshuas3)
+## Temporary Data Saving
 
-Package Name - Patrik 'Patrola' Xop (https://github.com/PatrikXop)
+By the nature of a push-write logging library, there's a chance that some created Statements and Events might not be pushed and written before the program's exit, whether it hangs, crashes, throws a runtime exception, is SIGKILLed, or anything else. Seeing as the point of logging is to find and diagnose errors with ease, it'd be frustrating to lose critical last-second information like this. The solution: save temporary serialized data for every creation or change to Statements, Events, or Queues. Every logtree that ends in a Statement will have its own temporary data file; when a Statement is pushed to an Event, the Statement's file will be deleted and replaced into the greater Event file. See the following example for how data is separated into files:
 
-### Issue Reporting/Contributing
+```
+Queue queue;
+Event event;
+Statement state1;
+Statement state2;
 
-You can report issues using GitHub's built-in repository [issue tracking feature](https://www.github.com/joshuas3/log-nest-monster/issues).
+// Existing files:
+// statement1.raw
+// statement2.raw
 
-You can contribute officially by [forking the repository and creating a pull request](https://www.github.com/joshuas3/log-nest-monster/compare).
+event.push(state1)
 
-### License
+// Existing files:
+// event.raw
+// statement2.raw
 
-This software is licensed under version 3 of the GNU General Public License.
+queue.push(event)
 
-    lognestmonster (c) 2018 Joshua 'joshuas3' Stockin
+// Existing files:
+// queue.raw
+// statement2.raw
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+event.push(state2)
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+// Existing files:
+// queue.raw (all log items now exist inside the queue)
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+queue.write()
 
-The license can be found [here](LICENSE).
+// Existing files:
+// log12345.raw (consists of 2 statements inside 1 event)
+```
+
+In reality, file names will likely contain timestamps, hashes, or some other form of identifiable metadata.
+
+## Copyright
+
+lognestmonster Copyright (c) 2019 Joshua 'joshuas3' Stockin under the [GNU General Public License v3](LICENSE).
+
+The following should be present in each file.
+```
+lognestmonster Copyright (c) 2019 Joshua 'joshuas3' Stockin
+<https://github.com/JoshuaS3/lognestmonster/>.
+
+
+This file is part of lognestmonster.
+
+lognestmonster is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+lognestmonster is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with lognestmonster. If not, see <https://www.gnu.org/licenses/>.
+```
