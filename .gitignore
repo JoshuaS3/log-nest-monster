@@ -1,2 +1,5 @@
 # Sublime Text Project
 *.sublime*
+
+# Cached Python files
+__pycache__
