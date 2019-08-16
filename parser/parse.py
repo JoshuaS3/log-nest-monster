@@ -22,6 +22,7 @@
 from utils import *
 from format import *
 from text import *
+from args import *
 
 class Parser:
 	screen = None
@@ -64,10 +65,10 @@ class Parser:
 			screen_width = self.ccols - 1
 			self.lines = [
 				"lognestmonster - log_folder/",
-				"Size: 9,608,560 bytes | Timestamp: 1565561768719",
-				"192,000 Statements | 4,820 Events | 18 Unsaved Data Trees",
-				pad(" STATEMENT 17 ", ":", screen_width),
-				"v 4 ITEMS",
+				"Size: 235 bytes | Timestamp: 1565561768719",
+				"7 Statements | 2 Events | 0 Unsaved Data Trees",
+				pad(" STATEMENT 5 ", ":", screen_width),
+				"v 7 ITEMS",
 				"  1565561768752 - INFO - INIT - HELLO",
 				"  1565561768752 - INFO - INIT - HELLO",
 				"  v 4 ITEMS",
@@ -78,6 +79,9 @@ class Parser:
 				"",
 				"    1565561768752 - INFO - INIT - HELLO",
 				"  1565561768752 - INFO - INIT - HELLO",
+				"",
+				"",
+				"",
 				"",
 				"",
 				"",
@@ -94,15 +98,19 @@ class Parser:
 
 
 def argument_parse(argv):
-	pass
+	options = {}
+	for key in ARGUMENT_OPTIONS:
+		data = ARGUMENT_OPTIONS[key]
+		for indicator in data["indicators"]:
+			if indicator in argv:
+				print(data["description"])
+	return options
 
 def main():
 	try:
 		args = sys.argv
-		if ("-v" in args):
-			output(VERSION_MESSAGE)
-		else:
-			Parser().loop()
+		argument_parse(args)
+		#output(VERSION_MESSAGE)
 	finally:
 		curses_reset()
 

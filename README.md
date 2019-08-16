@@ -147,13 +147,17 @@ ERROR       = 5
 ```
 With the sample log tree used here, the raw byte file totals 25 bytes. In use, a parser/deserializer could take this file and create output similar to the following:
 ```
-Log: sample.raw
-Timestamp: 1565561768719
-File size: 25 bytes
-Content: 1 statement
+lognestmonster - log_folder/
+Size: 33 bytes | Timestamp: 1565561768719
+1 Statement | 1 Event | 0 Unsaved Data Trees
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 v 1 ITEM
-    1565561768752 - INFO - INIT - HELLO
+  1565561768752 - INFO - INIT - HELLO
+
+
+
+::::::::::: press q to exit | arrow keys to move, expand, collapse :::::::::::
 ```
 
 ## Temporary Data Saving

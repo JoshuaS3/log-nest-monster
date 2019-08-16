@@ -82,12 +82,11 @@ def term_size():
 import curses
 def curses_window():
 	# init curses
-	curses.initscr()
+	screen = curses.initscr()
 	curses.start_color()
 
 	# get screen size and create new window
 	screen_size = term_size()
-	screen = curses.newwin(screen_size[0], screen_size[1], 0, 0)
 
 	# set cursor visibility to 0
 	curses.curs_set(0)

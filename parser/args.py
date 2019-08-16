@@ -20,14 +20,94 @@
 from text import *
 
 ARGUMENT_OPTIONS = {
+
+	# Command meta
+
 	"help": {
 		"indicators": ["-h", "-?", "--help"],
 		"option_count": 0,
-		"description": DESRIPTION_HELP
+		"description": DESCRIPTION_HELP
 	},
 	"version": {
-		"indicators": ["-v", "--version"],
+		"indicators": ["--version"],
 		"option_count": 0,
-		"description": DESRIPTION_VERSION
+		"description": DESCRIPTION_VERSION
+	},
+
+	# Data
+
+	"status": {
+		"indicators": ["-s", "--status"],
+		"option_count": 0,
+		"description": DESCRIPTION_STATUS
+	},
+
+	# Verbosity levels
+
+	"errors": {
+		"indicators": ["-e", "--errors"],
+		"option_count": 0,
+		"description": DESCRIPTION_ERRORS
+	},
+	"warnings": {
+		"indicators": ["-w", "--warnings"],
+		"option_count": 0,
+		"description": DESCRIPTION_WARNINGS
+	},
+	"info": {
+		"indicators": ["-i", "--info"],
+		"option_count": 0,
+		"description": DESCRIPTION_INFO
+	},
+	"debug": {
+		"indicators": ["-d", "--debug"],
+		"option_count": 0,
+		"description": DESCRIPTION_DEBUG
+	},
+	"verbose": {
+		"indicators": ["-v", "--verbose"],
+		"option_count": 0,
+		"description": DESCRIPTION_VERBOSE
+	},
+	"veryverbose": {
+		"indicators": ["-vv", "--veryverbose"],
+		"option_count": 0,
+		"description": DESCRIPTION_VERYVERBOSE
+	},
+
+	# filters
+
+	"after": {
+		"indicators": ["-a", "--after"],
+		"option_count": 1,
+		"description": DESCRIPTION_AFTER
+	},
+	"before": {
+		"indicators": ["-b", "--before"],
+		"option_count": 1,
+		"description": DESCRIPTION_BEFORE
+	},
+	"tag": {
+		"indicators": ["-t", "--tag"],
+		"option_count": 1,
+		"description": DESCRIPTION_TAG
+	},
+	"statement": {
+		"indicators": ["-c", "--statement"],
+		"option_count": 1,
+		"description": DESCRIPTION_STATEMENT
+	},
+	"event": {
+		"indicators": ["-q", "--event"],
+		"option_count": 1,
+		"description": DESCRIPTION_EVENT
+	},
+
+	# other
+
+	"tail": {
+		"indicators": ["-u", "--tail"],
+		"option_count": 0,
+		"description": DESCRIPTION_TAIL
 	}
 }
