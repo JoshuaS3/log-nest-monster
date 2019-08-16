@@ -76,7 +76,15 @@ In reference to data serialization, `parser` as used here is just a deserializer
 
 ## Serialization Format
 
-By default the library serializes log tree information in a special format. This can be overriden by any programmer that uses the library.
+By default the library serializes log tree information in a special format. This can be overriden by anybody that uses the library.
+
+### Metadata
+
+All saved files should begin with an `unsigned char` version number and an `unsigned long long` millisecond timestamp.
+```
+unsigned char version
+unsigned long long timestamp
+```
 
 ### Events
 Open event with `0x2` and close with `0x3`. Statements or more events can be written inbetween these tags.
@@ -101,7 +109,7 @@ Open statement with `0x0` and close `0x1`.
 ```
 0x0
     unsigned char verbosity
-    unsigned int timestamp
+    unsigned long long timestamp
     unsigned char tag_size
     unsigned char[] tag
     unsigned short message_size
@@ -124,22 +132,24 @@ ERROR       = 5
 ### Example
 1 statement inside one 1 event:
 ```
+1565561768719 // timestamp    8*
 0x2     // open event         1
 0x0     // open statement     1
-1565561768752 // timestamp    4
+1565561768752 // timestamp    8*
 0       // verbosity          1
 4       // tag_size           1
-"INIT"  // tag                4
+"INIT"  // tag                4*
 5       // message_size       2
-"HELLO" // message            5
+"HELLO" // message            5*
 0x1     // close statement    1
 0x3     // close event        1
-        //                    21 total bytes for this log tree
+        //                    33 total bytes for this log tree
 ```
-With the sample log tree used here, the raw byte file totals 21 bytes. In use, a parser/deserializer could take this file and create output similar to the following:
+With the sample log tree used here, the raw byte file totals 25 bytes. In use, a parser/deserializer could take this file and create output similar to the following:
 ```
 Log: sample.raw
-File size: 21 bytes
+Timestamp: 1565561768719
+File size: 25 bytes
 Content: 1 statement
 
 v 1 ITEM

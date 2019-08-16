@@ -1,3 +1,23 @@
+# lognestmonster Copyright (c) 2019 Joshua 'joshuas3' Stockin
+# <https://github.com/JoshuaS3/lognestmonster/>.
+
+
+# This file is part of lognestmonster.
+
+# lognestmonster is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# lognestmonster is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with lognestmonster. If not, see <https://www.gnu.org/licenses/>.
+
+
 # get character from stdin
 
 import termios, sys, tty
@@ -6,35 +26,88 @@ def getch():
 	old_settings = termios.tcgetattr(fd)
 	try:
 		tty.setraw(fd)
-		ch = sys.stdin.read(1)
+		buf = sys.stdin.read(1)
+		if buf == b"\x1b": # if escaped
+			while True:
+				ch = sys.stdin.read(1)
+				buf += ch
+				if ch.isalpha():
+					break
 	finally:
 		termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-	return ch
+	return buf
 
+# command
+
+import subprocess
+def command(*args):
+	cmd_string = ""
+	for i in args:
+		cmd_string += i + " "
+	cmd_string.rstrip()
+	cmd_array = cmd_string.split(" ")
+	readable = subprocess.Popen(cmd_array, stdout=subprocess.PIPE)
+	return readable.stdout.read().decode("latin-1").strip()
+
+# array to string
+
+def array_stringify(array):
+	index = 0
+	for i in array:
+		array[index] = str(i)
+		index += 1
+	return array
 
 # echo output
 
-import subprocess
+import sys
 def output(*array):
+	array = array_stringify(list(array))
 	s = "".join(array)
-	a=subprocess.run(["echo", "-e", s]);
+	sys.stdout.write(s.rstrip() + "\n")
 
+def output_lines(array):
+	for line in array:
+		output(line)
 
-# ANSI codes for output
+# terminfo stuff
 
-RESET = "\e[0m"
-BOLD = "\e[1m"
-UNDERLINED = "\e[4m"
-CONTRAST = "\e[7m"
+def term_size():
+	lines = int(command("tput lines"))
+	cols = int(command("tput cols"))
+	return (lines, cols)
 
-TEXT_RED = "\e[91m"
-TEXT_GREEN = "\e[92m"
-TEXT_YELLOW = "\e[93m"
-TEXT_MAGENTA = "\e[95m"
-TEXT_CYAN = "\e[96m"
+# drawing
 
-BACK_RED = "\e[101m"
-BACK_GREEN = "\e[102m"
-BACK_YELLOW = "\e[103m"
-BACK_MAGENTA = "\e[105m"
-BACK_CYAN = "\e[106m"
+import curses
+def curses_window():
+	# init curses
+	curses.initscr()
+	curses.start_color()
+
+	# get screen size and create new window
+	screen_size = term_size()
+	screen = curses.newwin(screen_size[0], screen_size[1], 0, 0)
+
+	# set cursor visibility to 0
+	curses.curs_set(0)
+
+	# set new window to current
+	curses_refresh(screen)
+
+	return screen
+
+def curses_clear(screen):
+	screen.clear()
+	screen.touchwin()
+	curses_refresh(screen)
+
+def curses_refresh(screen):
+	screen.refresh()
+
+def curses_reset():
+	try:
+		if not curses.isendwin():
+			curses.endwin()
+	except:
+		pass

@@ -3,3 +3,4 @@
 
 # Cached Python files
 __pycache__
+*.pyc

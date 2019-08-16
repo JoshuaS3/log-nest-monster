@@ -17,14 +17,17 @@
 # You should have received a copy of the GNU General Public License
 # along with lognestmonster. If not, see <https://www.gnu.org/licenses/>.
 
+from text import *
 
-VERSION_MESSAGE = """lognestmonster/0.1.0 Copyright (c) 2019 Joshua 'joshuas3' Stockin
-Licensed under version 3 of the GNU General Public License
-<https://github.com/JoshuaS3/lognestmonster/>
-"""
-
-HELP_MESSAGE = """Usage: lognestmonster [OPTIONS]"""
-
-DESRIPTION_HELP = "Displays program description and a list of valid options and other arguments."
-
-CONTROLS_MESSAGE = """ press q to exit | arrow keys to move, expand, collapse """
+ARGUMENT_OPTIONS = {
+	"help": {
+		"indicators": ["-h", "-?", "--help"],
+		"option_count": 0,
+		"description": DESRIPTION_HELP
+	},
+	"version": {
+		"indicators": ["-v", "--version"],
+		"option_count": 0,
+		"description": DESRIPTION_VERSION
+	}
+}
