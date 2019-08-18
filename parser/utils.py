@@ -20,13 +20,13 @@
 
 # get character from stdin
 
-import termios, sys, tty
-def getch():
+import termios, sys, tty, os, fcntl
+def getch(cbytes=1):
 	fd = sys.stdin.fileno()
 	old_settings = termios.tcgetattr(fd)
 	try:
 		tty.setraw(fd)
-		buf = sys.stdin.read(1)
+		buf = sys.stdin.read(cbytes)
 		if buf == b"\x1b": # if escaped
 			while True:
 				ch = sys.stdin.read(1)
@@ -83,7 +83,18 @@ import curses
 def curses_window():
 	# init curses
 	screen = curses.initscr()
+	curses.raw()
 	curses.start_color()
+	curses.use_default_colors()
+
+	curses.init_pair(1, curses.COLOR_BLACK, -1)
+	curses.init_pair(2, curses.COLOR_BLUE, -1)
+	curses.init_pair(3, curses.COLOR_CYAN, -1)
+	curses.init_pair(4, curses.COLOR_GREEN, -1)
+	curses.init_pair(5, curses.COLOR_MAGENTA, -1)
+	curses.init_pair(6, curses.COLOR_RED, -1)
+	curses.init_pair(7, curses.COLOR_WHITE, -1)
+	curses.init_pair(8, curses.COLOR_YELLOW, -1)
 
 	# get screen size and create new window
 	screen_size = term_size()
@@ -102,7 +113,8 @@ def curses_clear(screen):
 	curses_refresh(screen)
 
 def curses_refresh(screen):
-	screen.refresh()
+	if screen.is_wintouched():
+		screen.refresh()
 
 def curses_reset():
 	try:

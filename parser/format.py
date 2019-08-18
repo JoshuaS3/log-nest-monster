@@ -37,8 +37,6 @@ BACK_YELLOW = "\033[103m"
 BACK_MAGENTA = "\033[105m"
 BACK_CYAN = "\033[106m"
 
-POSITION = "\033[{0};{1}H"
-
 UP = "\x1b[A"
 DOWN = "\x1b[B"
 RIGHT = "\x1b[C"
@@ -48,12 +46,12 @@ CTRLC = "\x03"
 
 # wrap lines
 
-def wrap(string, width):
+def wrap(string, width, delimiter=None):
 	string_length = len(string)
-	if string_length <= width: return [string]
+	if string_length <= width: return [string.replace(delimiter or "\0", " ")]
 	lines = []
 	line = ""
-	words = string.split()
+	words = string.split(delimiter)
 	for word in words:
 		line += " "
 		word_length = len(word)
@@ -77,19 +75,22 @@ def wrap(string, width):
 		lines.append(line)
 	return lines
 
-def columnize(items, max):
+def columnize(items, width):
 	string = ""
 	for item in items:
 		length = item[0]
 		content = item[1].strip()[:length]
 		string += content.ljust(length, " ")
-	return string[:max]
+	return string[:width]
 
 def pad(string, padding, width):
 	length = len(string)
-	if length >= width: return string[:length]
+	if length >= width: return string[:width]
 	padding_length = (width-length)/2
-	return padding*padding_length + string + padding*padding_length
+	return (padding*padding_length + string + padding*padding_length)[:width]
+
+def margin(string, m=" "):
+	return m + string + m
 
 def expand(string1, string2, width):
 	if len(string1) >= width: return string1[:width]

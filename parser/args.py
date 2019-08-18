@@ -25,12 +25,10 @@ ARGUMENT_OPTIONS = {
 
 	"help": {
 		"indicators": ["-h", "-?", "--help"],
-		"option_count": 0,
 		"description": DESCRIPTION_HELP
 	},
 	"version": {
 		"indicators": ["--version"],
-		"option_count": 0,
 		"description": DESCRIPTION_VERSION
 	},
 
@@ -38,7 +36,6 @@ ARGUMENT_OPTIONS = {
 
 	"status": {
 		"indicators": ["-s", "--status"],
-		"option_count": 0,
 		"description": DESCRIPTION_STATUS
 	},
 
@@ -46,32 +43,26 @@ ARGUMENT_OPTIONS = {
 
 	"errors": {
 		"indicators": ["-e", "--errors"],
-		"option_count": 0,
 		"description": DESCRIPTION_ERRORS
 	},
 	"warnings": {
 		"indicators": ["-w", "--warnings"],
-		"option_count": 0,
 		"description": DESCRIPTION_WARNINGS
 	},
 	"info": {
 		"indicators": ["-i", "--info"],
-		"option_count": 0,
 		"description": DESCRIPTION_INFO
 	},
 	"debug": {
 		"indicators": ["-d", "--debug"],
-		"option_count": 0,
 		"description": DESCRIPTION_DEBUG
 	},
 	"verbose": {
 		"indicators": ["-v", "--verbose"],
-		"option_count": 0,
 		"description": DESCRIPTION_VERBOSE
 	},
 	"veryverbose": {
 		"indicators": ["-vv", "--veryverbose"],
-		"option_count": 0,
 		"description": DESCRIPTION_VERYVERBOSE
 	},
 
@@ -79,35 +70,33 @@ ARGUMENT_OPTIONS = {
 
 	"after": {
 		"indicators": ["-a", "--after"],
-		"option_count": 1,
 		"description": DESCRIPTION_AFTER
 	},
 	"before": {
 		"indicators": ["-b", "--before"],
-		"option_count": 1,
 		"description": DESCRIPTION_BEFORE
 	},
 	"tag": {
 		"indicators": ["-t", "--tag"],
-		"option_count": 1,
 		"description": DESCRIPTION_TAG
 	},
 	"statement": {
-		"indicators": ["-c", "--statement"],
-		"option_count": 1,
+		"indicators": ["-c"],
 		"description": DESCRIPTION_STATEMENT
 	},
 	"event": {
-		"indicators": ["-q", "--event"],
-		"option_count": 1,
+		"indicators": ["-q"],
 		"description": DESCRIPTION_EVENT
 	},
 
 	# other
 
-	"tail": {
-		"indicators": ["-u", "--tail"],
-		"option_count": 0,
-		"description": DESCRIPTION_TAIL
+	"follow": {
+		"indicators": ["-f", "--follow"],
+		"description": DESCRIPTION_FOLLOW
+	},
+	"stdin": {
+		"indicators": ["-x", "--stdin"],
+		"description": DESCRIPTION_STDIN
 	}
 }
