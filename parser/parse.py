@@ -219,7 +219,7 @@ def main():
 	positional = sys.argv[-1]
 	if positional is not "-" and os.path.isfile(positional) is not True and os.path.isdir(positional) is not True:
 		output(VERSION_SHORT)
-		output(TEXT_RED + "error:" + RESET + " file unknown " + positional)
+		output(TEXT_RED + "error:" + RESET + " file unknown '" + positional + "'")
 		output(HELP_MESSAGE)
 		output()
 		return

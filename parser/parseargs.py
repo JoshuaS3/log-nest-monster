@@ -40,7 +40,7 @@ def parseargs(argv):
 			continue
 		opt = get_arg_from_indicator(arg)
 		if arg.startswith("-") and opt is None: # is a flag/option but is not known
-			options = TEXT_RED + "error:" + RESET + " unknown flag/option " + arg
+			options = TEXT_RED + "error:" + RESET + " unknown flag/option '" + arg + "'"
 			break
 		options[opt] = None
 		argn += 1
