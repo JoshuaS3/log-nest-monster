@@ -75,11 +75,16 @@ def output_lines(array):
 def term_size():
 	lines = int(command("tput lines"))
 	cols = int(command("tput cols"))
+	if cols > 80: cols = 80
 	return (lines, cols)
 
 # drawing
 
-import curses
+try:
+	import curses
+except ImportError:
+	output("curses not installed. if on Windows run `pip install windows-curses`")
+	exit(1)
 def curses_window():
 	# init curses
 	screen = curses.initscr()

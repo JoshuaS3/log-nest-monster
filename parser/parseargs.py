@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with lognestmonster. If not, see <https://www.gnu.org/licenses/>.
 
+from format import *
 from args import *
 # yeah, I know argparse is a thing, but I don't like it...
 
@@ -31,6 +32,16 @@ def get_arg_description(name):
 
 def parseargs(argv):
 	options = {}
-	for arg in argv:
+	argn = 0
+	while argn < len(argv):
+		arg = argv[argn]
+		if arg == "-":
+			argn += 1
+			continue
 		opt = get_arg_from_indicator(arg)
+		if arg.startswith("-") and opt is None: # is a flag/option but is not known
+			options = TEXT_RED + "error:" + RESET + " unknown flag/option " + arg
+			break
+		options[opt] = None
+		argn += 1
 	return options

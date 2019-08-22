@@ -69,11 +69,11 @@ ARGUMENT_OPTIONS = {
 	# filters
 
 	"after": {
-		"indicators": ["-a", "--after"],
+		"indicators": ["--after"],
 		"description": DESCRIPTION_AFTER
 	},
 	"before": {
-		"indicators": ["-b", "--before"],
+		"indicators": ["--before"],
 		"description": DESCRIPTION_BEFORE
 	},
 	"tag": {
@@ -94,9 +94,5 @@ ARGUMENT_OPTIONS = {
 	"follow": {
 		"indicators": ["-f", "--follow"],
 		"description": DESCRIPTION_FOLLOW
-	},
-	"stdin": {
-		"indicators": ["-x", "--stdin"],
-		"description": DESCRIPTION_STDIN
 	}
 }

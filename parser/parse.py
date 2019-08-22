@@ -19,10 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with lognestmonster. If not, see <https://www.gnu.org/licenses/>.
 
+import os
 from utils import *
 from format import *
 from text import *
 from args import *
+from parseargs import *
 
 class Parser:
 	screen = None
@@ -47,6 +49,7 @@ class Parser:
 			self.screen.move(l, 0)
 			s = ""
 			for string in line:
+				# ("content string", "attributes string")
 				content = string[0]
 				s += content
 
@@ -57,7 +60,7 @@ class Parser:
 				except:
 					attr = ""
 
-				if "RESET" in attr:
+				if "RESET" in attr: # set curses attributes based on attributes string
 					self.screen.attron(curses.color_pair(0))
 				else:
 					if "BLACK" in attr:
@@ -116,6 +119,8 @@ class Parser:
 					"Size: 235 bytes | Timestamp: 1565561768719",
 					[("7 Statements | 2 Events | 0 Unsaved Data Trees", "")],
 					pad(" STATEMENT 5 ", ":", screen_width),
+					"",
+					"[[LOG START]]",
 					"v 7 ITEMS",
 					tab("1565561768752 - INFO - INIT - HELLO"),
 					tab("1565561768752 - INFO - INIT - HELLO"),
@@ -129,9 +134,7 @@ class Parser:
 					tab("1565561768752 - INFO - INIT - HELLO"),
 					"",
 					str(input),
-					"",
-					"",
-					"",
+					"[[LOG END]",
 					"",
 					"",
 					"",
@@ -147,10 +150,10 @@ class Parser:
 			curses_reset()
 
 def main():
-	options = []#argument_parse(sys.argv)
+	options = parseargs(sys.argv)
 
 	display_help = "help" in options
-	display_version = True#"version" in options
+	display_version = "version" in options
 	is_status = "status" in options
 
 	screen_size = term_size()
@@ -158,7 +161,7 @@ def main():
 	ccols = screen_size[1] - 2
 
 	if display_help:
-		output_lines(VERSION_SHORT)
+		output(VERSION_SHORT)
 
 		usage = []
 		line = "usage: lognestmonster "
@@ -203,9 +206,23 @@ def main():
 		return
 	elif display_version:
 		output(VERSION_MESSAGE)
-	else:
+		return
+	elif len(sys.argv) == 1 or type(options) is str:
+		#Parser().loop()
 		output(VERSION_SHORT)
+		if type(options) is str:
+			output(options)
 		output(HELP_MESSAGE)
+		output()
+		return
+
+	positional = sys.argv[-1]
+	if positional is not "-" and os.path.isfile(positional) is not True and os.path.isdir(positional) is not True:
+		output(VERSION_SHORT)
+		output(TEXT_RED + "error:" + RESET + " file unknown " + positional)
+		output(HELP_MESSAGE)
+		output()
+		return
 
 if __name__ == "__main__":
 	main()
