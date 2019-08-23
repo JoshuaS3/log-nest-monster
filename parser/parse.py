@@ -112,12 +112,12 @@ class Parser:
 		try:
 			while True:
 				self.get_size()
-				screen_width = self.ccols - 2
+				screen_width = self.ccols
 
 				self.lines = [
 					[(self.title + " - ", "RESET"), (self.folder_name, "BOLD YELLOW")],
 					"Size: 235 bytes | Timestamp: 1565561768719",
-					[("7 Statements | 2 Events | 0 Unsaved Data Trees", "")],
+					"7 Statements | 2 Events | 0 Unsaved Data Trees",
 					pad(" STATEMENT 5 ", ":", screen_width),
 					"",
 					"[[LOG START]]",
@@ -137,7 +137,6 @@ class Parser:
 					"[[LOG END]",
 					"",
 					"",
-					"",
 					pad(margin(CONTROLS_MESSAGE), ":", screen_width)
 				]
 				self.redraw()
@@ -150,7 +149,7 @@ class Parser:
 			curses_reset()
 
 def main():
-	options = parseargs(sys.argv)
+	options = parseargs(sys.argv[1:])
 
 	display_help = "help" in options
 	display_version = "version" in options
@@ -202,18 +201,16 @@ def main():
 			args += arg_lines
 
 		output_lines(args)
-		output()
 		return
 	elif display_version:
 		output(VERSION_MESSAGE)
 		return
-	elif len(sys.argv) == 1 or type(options) is str:
+	elif len(sys.argv) == 1 or type(options) is str: # argument error or no args passed
 		#Parser().loop()
 		output(VERSION_SHORT)
-		if type(options) is str:
+		if type(options) is str: # print argument error is exists
 			output(options)
 		output(HELP_MESSAGE)
-		output()
 		return
 
 	positional = sys.argv[-1]
@@ -221,8 +218,17 @@ def main():
 		output(VERSION_SHORT)
 		output(TEXT_RED + "error:" + RESET + " file unknown '" + positional + "'")
 		output(HELP_MESSAGE)
-		output()
 		return
+
+
+	output("args: " + str(options))
+	output("file: " + positional)
+
+	p = Parser()
+	if positional is "-": positional = "stdin"
+	p.folder_name = positional
+	p.loop()
+
 
 if __name__ == "__main__":
 	main()

@@ -36,10 +36,10 @@ def parseargs(argv):
 	while argn < len(argv):
 		arg = argv[argn]
 		if arg == "-":
-			argn += 1
-			continue
+			if argn == len(argv)-1: # if it's the last argument, allow it
+				break
 		opt = get_arg_from_indicator(arg)
-		if arg.startswith("-") and opt is None: # is a flag/option but is not known
+		if argn is not len(argv) - 1 and opt is None: # is a flag/option but is not known
 			options = TEXT_RED + "error:" + RESET + " unknown flag/option '" + arg + "'"
 			break
 		options[opt] = None
