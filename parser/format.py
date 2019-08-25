@@ -78,7 +78,7 @@ def wrap(string, width, delimiter=None):
 def columnize(items, width):
 	string = ""
 	for item in items:
-		length = item[0]
+		length = int(item[0])
 		content = item[1].strip()[:length]
 		string += content.ljust(length, " ")
 	return string[:width]
@@ -86,7 +86,7 @@ def columnize(items, width):
 def pad(string, padding, width):
 	length = len(string)
 	if length >= width: return string[:width]
-	padding_length = (width-length)/2
+	padding_length = int((width-length)/2)
 	return (padding*padding_length + string + padding*padding_length)[:width]
 
 def margin(string, m=" "):

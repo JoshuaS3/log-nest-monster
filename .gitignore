@@ -4,3 +4,6 @@
 # Cached Python files
 __pycache__
 *.pyc
+
+# Lognestmonster log files
+*.lnm
