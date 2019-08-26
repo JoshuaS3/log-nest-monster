@@ -19,10 +19,12 @@
 
 from format import *
 
+VERSION = "0.3.0"
 TITLE = "lognestmonster"
-VERSION = "0.1.0"
+YEAR = "2019"
+AUTHOR = "Joshua 'joshuas3' Stockin"
 
-VERSION_SHORT = "{0}/{1} Copyright (c) 2019 Joshua 'joshuas3' Stockin".format(TITLE, VERSION)
+VERSION_SHORT = "{0}/{1} Copyright (c) {2} {3}".format(TITLE, VERSION, YEAR, AUTHOR)
 
 VERSION_MESSAGE = """{0}
 Licensed under version 3 of the GNU General Public License
@@ -43,7 +45,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-Written by Joshua 'joshuas3' Stockin.""".format(VERSION_SHORT)
+Written by {1}.""".format(VERSION_SHORT, AUTHOR)
 
 # Help screen information
 
