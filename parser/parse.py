@@ -207,12 +207,13 @@ def main():
 		output(VERSION_MESSAGE)
 		return
 	elif len(sys.argv) == 1 or type(options) is str: # argument error or no args passed
-		#Parser().loop()
+		exitcode = 0
 		output(VERSION_SHORT)
 		if type(options) is str: # print argument error is exists
 			output(options)
+			exitcode = 1
 		output(HELP_MESSAGE)
-		exit(1)
+		exit(exitcode)
 
 	positional = sys.argv[-1]
 	if positional is not "-" and os.path.isfile(positional) is not True and os.path.isdir(positional) is not True:
@@ -225,10 +226,11 @@ def main():
 	output("args: " + str(options))
 	output("file: " + positional)
 
-	p = Parser()
-	if positional is "-": positional = "stdin"
-	p.folder_name = positional
-	p.loop()
+	if not is_status:
+		p = Parser()
+		if positional is "-": positional = "stdin"
+		p.folder_name = positional
+		p.loop()
 
 
 if __name__ == "__main__":
