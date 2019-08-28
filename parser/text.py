@@ -56,7 +56,7 @@ COMMAND_INFO = """The lognestmonster library allows you to generate log files wi
 
 
 
-By default, inputting a queue file, a folder with queue files, or switching stdin (passing "-" for QUEUE) will display an interactive textual interface where keyboard events are used to sift through log statements. Using the status switch (-s, --status), you can do a quick read of the instream and only display metadata, such as the number of statements or events, rather than a textual user interface. If the follow switch is used (-f, --follow), the parser will keep the instreams open and generate live logtrees. Switching stdin ("-") automatically switches follow. See other switches and options for the ability to narrow down log results. Log-unrelated commands (help, version, or no args) do not require a QUEUE variable.
+By default, inputting a queue file, a folder with queue files, or switching stdin (passing "-" for QUEUE) will display an interactive textual interface where keyboard events are used to sift through log statements. Using the status switch (-s, --status), you can do a quick read of the instream and only display metadata, such as the number of statements or events, rather than a textual user interface. If the follow switch is used (-f, --follow), the parser will keep the instreams open and generate live logtrees. Switching stdin ("-") automatically switches follow. Hanging logtrees are not displayed when following is switched on (including stdin). See other switches and options for the ability to narrow down log results. Log-unrelated commands (help, version, or no args) do not require a QUEUE variable.
 
 
 
@@ -74,11 +74,10 @@ DESCRIPTION_DEBUG = "Omits all statements besides those with verbosity type 'deb
 DESCRIPTION_VERBOSE = "Omits all statements besides those with verbosty type 'verbose'. Stackable with other verbosity level commands"
 DESCRIPTION_VERYVERBOSE = "Omits all statements besides those with verbosity type 'veryverbose'. Stackable with other verbosity level commands"
 
-DESCRIPTION_BEFORE = "Limits log results to before a certain timestamp. A millisecond UNIX timestamp must be provided."
+DESCRIPTION_BEFORE = "Limits log results to before a certain timestamp. A millisecond UNIX timestamp must be provided"
 DESCRIPTION_AFTER = "Limits log results to after a certain timestamp. A millisecond UNIX timestamp must be provided"
 DESCRIPTION_TAG = "Limits log results to a tag. A string of the tag/invoker must be provided"
-DESCRIPTION_STATEMENT = "Limits log results to a numbered statement"
-DESCRIPTION_EVENT = "Limits log results to a numbered event and its children"
+DESCRIPTION_ITEM = "Limits log results to a numbered log item (statement or event). A positive integer must be provided"
 
 DESCRIPTION_FOLLOW = "Provides a live view of the log tree stream, similar to the 'tail -f' command"
 

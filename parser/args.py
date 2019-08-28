@@ -25,74 +25,84 @@ ARGUMENT_OPTIONS = {
 
 	"help": {
 		"indicators": ["-h", "-?", "--help"],
-		"description": DESCRIPTION_HELP
+		"description": DESCRIPTION_HELP,
+		"valcount": 0
 	},
 	"version": {
 		"indicators": ["--version"],
-		"description": DESCRIPTION_VERSION
+		"description": DESCRIPTION_VERSION,
+		"valcount": 0
 	},
 
 	# Data
 
 	"status": {
 		"indicators": ["-s", "--status"],
-		"description": DESCRIPTION_STATUS
+		"description": DESCRIPTION_STATUS,
+		"valcount": 0
 	},
 
 	# Verbosity levels
 
 	"errors": {
 		"indicators": ["-e", "--errors"],
-		"description": DESCRIPTION_ERRORS
+		"description": DESCRIPTION_ERRORS,
+		"valcount": 0
 	},
 	"warnings": {
 		"indicators": ["-w", "--warnings"],
-		"description": DESCRIPTION_WARNINGS
+		"description": DESCRIPTION_WARNINGS,
+		"valcount": 0
 	},
 	"info": {
 		"indicators": ["-i", "--info"],
-		"description": DESCRIPTION_INFO
+		"description": DESCRIPTION_INFO,
+		"valcount": 0
 	},
 	"debug": {
 		"indicators": ["-d", "--debug"],
-		"description": DESCRIPTION_DEBUG
+		"description": DESCRIPTION_DEBUG,
+		"valcount": 0
 	},
 	"verbose": {
 		"indicators": ["-v", "--verbose"],
-		"description": DESCRIPTION_VERBOSE
+		"description": DESCRIPTION_VERBOSE,
+		"valcount": 0
 	},
 	"veryverbose": {
 		"indicators": ["-vv", "--veryverbose"],
-		"description": DESCRIPTION_VERYVERBOSE
+		"description": DESCRIPTION_VERYVERBOSE,
+		"valcount": 0
 	},
 
 	# filters
 
 	"after": {
 		"indicators": ["--after"],
-		"description": DESCRIPTION_AFTER
+		"description": DESCRIPTION_AFTER,
+		"valcount": 1
 	},
 	"before": {
 		"indicators": ["--before"],
-		"description": DESCRIPTION_BEFORE
+		"description": DESCRIPTION_BEFORE,
+		"valcount": 1
 	},
 	"tag": {
 		"indicators": ["-t", "--tag"],
-		"description": DESCRIPTION_TAG
+		"description": DESCRIPTION_TAG,
+		"valcount": 1
 	},
-	"statement": {
-		"indicators": ["-c"],
-		"description": DESCRIPTION_STATEMENT
-	},
-	"event": {
-		"indicators": ["-q"],
-		"description": DESCRIPTION_EVENT
+	"item": {
+		"indicators": ["--item"],
+		"description": DESCRIPTION_ITEM,
+		"valcount": 1
 	},
 
 	# other
 
 	"follow": {
 		"indicators": ["-f", "--follow"],
-		"description": DESCRIPTION_FOLLOW
+		"description": DESCRIPTION_FOLLOW,
+		"valcount": 0
 	}
 }
