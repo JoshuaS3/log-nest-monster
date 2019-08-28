@@ -212,14 +212,14 @@ def main():
 		if type(options) is str: # print argument error is exists
 			output(options)
 		output(HELP_MESSAGE)
-		return
+		exit(1)
 
 	positional = sys.argv[-1]
 	if positional is not "-" and os.path.isfile(positional) is not True and os.path.isdir(positional) is not True:
 		output(VERSION_SHORT)
 		output(TEXT_RED + "error:" + RESET + " file unknown '" + positional + "'")
 		output(HELP_MESSAGE)
-		return
+		exit(1)
 
 
 	output("args: " + str(options))
