@@ -1,4 +1,12 @@
 language: python
+os:
+  - linux
+  - osx
+  - windows
+matrix:
+  allow-failures:
+    - os: osx
+    - os: windows
 python:
   - "3.4"
   - "3.5"
