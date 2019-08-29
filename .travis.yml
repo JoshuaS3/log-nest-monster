@@ -8,4 +8,4 @@ python:
   - "3.8-dev"
   - "nightly"
 script:
-  - ./tests/unit_parseargs.py
+  - ./tests/unit_parserargs.py
