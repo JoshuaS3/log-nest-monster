@@ -1,12 +1,4 @@
 language: python
-os:
-  - linux
-  - osx
-  - windows
-matrix:
-  allow-failures:
-    - os: osx
-    - os: windows
 python:
   - "3.4"
   - "3.5"
@@ -15,5 +7,20 @@ python:
   - "3.7-dev"
   - "3.8-dev"
   - "nightly"
-script:
-  - python3 tests/unit_parserargs.py
+matrix:
+  include:
+    - name: "Python 3.x on Linux"
+      language: python
+    - name: "Python 3.7 on macOS"
+      os: osx
+      osx-image: xcode11
+      language: shell
+    - name: "Python 3.7 on Windows"
+      os: windows
+      language: shell
+      before_install:
+        - choco install python
+        - python -m pip install --upgrade pip
+      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
+install: pip3 install --upgrade pip
+script: python3 tests/unit_parserargs.py || python3 tests/unit_parserargs.py
