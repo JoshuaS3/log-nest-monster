@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # lognestmonster Copyright (c) 2019 Joshua 'joshuas3' Stockin
 # <https://github.com/JoshuaS3/lognestmonster/>.
 
