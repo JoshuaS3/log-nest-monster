@@ -4,6 +4,7 @@ import sys
 import os
 import time
 import ctypes
+import random
 
 def exists(f):
 	return os.path.isfile(f) or os.path.isdir(f)
@@ -23,6 +24,14 @@ def uchar(n):
 def ulonglong(n):
 	return ctypes.c_ulonglong(n)
 
+def s(n=20):
+	l = int(random.random()*n)
+	st = ""
+	for i in range(0, l):
+		c = 97+int(random.random()*26)
+		st += chr(c)
+	return st
+
 if __name__ == "__main__":
 	try:
 		out = sys.argv[1]
@@ -37,14 +46,9 @@ if __name__ == "__main__":
 	open_event = uchar(2)
 	close_event = uchar(3)
 
-	ts2 = ulonglong(milli())
 	verbosity = uchar(0)
 
-	tag = enc("INIT")
-	tag_len = uchar(len(tag))
-
-	message = enc("HELLO")
-	message_len = ushort(len(message))
+	start = milli()
 
 	try:
 		f = open(out, "wb")
@@ -52,17 +56,26 @@ if __name__ == "__main__":
 		f.write(version)
 		f.write(queue_time)
 		f.write(open_event)
-		f.write(open_statement)
-		f.write(ts2)
-		f.write(verbosity)
-		f.write(tag_len)
-		f.write(tag)
-		f.write(message_len)
-		f.write(message)
-		f.write(close_statement)
+		for i in range(0, 50000):
+			ts = ulonglong(milli())
+
+			tag = enc("hello")#enc(s(10))
+			tag_len = uchar(len(tag))
+
+			message = enc(s(100))
+			message_len = ushort(len(message))
+			f.write(open_statement)
+			f.write(ts)
+			f.write(verbosity)
+			f.write(tag_len)
+			f.write(tag)
+			f.write(message_len)
+			f.write(message)
+			f.write(close_statement)
 		f.write(close_event)
+
 	finally:
 		f.close()
-		print(os.stat(out).st_size)
+		print("file written with size {0} in {1} seconds".format(os.stat(out).st_size, (milli()-start)/1000))
 
 

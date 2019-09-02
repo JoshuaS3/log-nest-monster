@@ -18,11 +18,13 @@
 # along with lognestmonster. If not, see <https://www.gnu.org/licenses/>.
 
 import os
+import sys
 from utils import *
 from format import *
 from text import *
 from args import *
 from parseargs import *
+from read import *
 
 class Parser:
 	screen = None
@@ -200,6 +202,8 @@ def main():
 			args += arg_lines
 
 		output_lines(args)
+		output()
+		output(DESCRIPTION_PYTHON_VERSION)
 		return
 	elif display_version:
 		output(VERSION_MESSAGE)
@@ -220,15 +224,28 @@ def main():
 		output(HELP_MESSAGE)
 		exit(1)
 
+	if positional is "-": positional = "stdin"
 
 	output("args: " + str(options))
 	output("file: " + positional)
 
+	if positional is "stdin":
+		fd = sys.stdin
+	else:
+		try:
+			fd = open(positional, "rb")
+		except:
+			output(TEXT_RED + "error:" + RESET + " unable to open file")
+			exit(1)
+
 	if not is_status:
 		p = Parser()
-		if positional is "-": positional = "stdin"
 		p.folder_name = positional
 		p.loop()
+	else:
+		r = Reader(fd)
+
+	fd.close()
 
 
 if __name__ == "__main__":

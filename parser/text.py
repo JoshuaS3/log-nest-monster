@@ -81,6 +81,9 @@ DESCRIPTION_ITEM = "Limits log results to a numbered log item (statement or even
 
 DESCRIPTION_FOLLOW = "Provides a live view of the log tree stream, similar to the 'tail -f' command"
 
+import platform # sigh
+DESCRIPTION_PYTHON_VERSION = "Running Python version {0}".format(platform.python_version())
+
 # TUI messages
 
 HEADER_MESSAGE = "lognestmonster - {0}"

@@ -85,6 +85,7 @@ All saved files should begin with an `unsigned char` version number and an `unsi
 unsigned char version
 unsigned long long timestamp
 ```
+Version is representative of both the type of logtree and the format. Versions `0-99` should be indicative of Queues; `100-199` of Statements; `200-255` of Events.
 
 ### Events
 Open event with `0x2` and close with `0x3`. Statements or more events can be written inbetween these tags.
@@ -108,8 +109,8 @@ Open statement with `0x0` and close `0x1`.
 
 ```
 0x0
-    unsigned char verbosity
     unsigned long long timestamp
+    unsigned char verbosity
     unsigned char tag_size
     unsigned char[] tag
     unsigned short message_size
