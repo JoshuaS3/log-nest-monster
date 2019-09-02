@@ -233,7 +233,7 @@ def main():
 		fd = sys.stdin
 	else:
 		try:
-			fd = open(positional, "rb")
+			fd = open(positional, "rb", buffering=8192)
 		except:
 			output(TEXT_RED + "error:" + RESET + " unable to open file")
 			exit(1)
@@ -244,6 +244,8 @@ def main():
 		p.loop()
 	else:
 		r = Reader(fd)
+		if positional is not "stdin": r.size()
+		r.scan()
 
 	fd.close()
 

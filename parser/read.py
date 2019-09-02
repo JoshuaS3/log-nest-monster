@@ -28,8 +28,6 @@ STATEMENT_END = 1
 EVENT_START = 2
 EVENT_END = 3
 
-BUFFER_SIZE = 4096
-
 VERBOSITY_LEVELS = {
 	0: "INIT",
 	1: "DEBUG",
@@ -74,9 +72,6 @@ class Reader:
 	filter_verbosity = -1
 	filter_tag = -1
 
-	buf = b""
-	bufp = BUFFER_SIZE
-
 	def __init__(self, fd):
 		self.fd = fd
 
@@ -96,12 +91,6 @@ class Reader:
 		self.filter_time_end = -1
 		self.filter_verbosity = -1
 		self.filter_tag = -1
-
-		self.buf = b""
-		self.bufp = BUFFER_SIZE
-
-		self.size()
-		self.scan()
 
 	def size(self):
 		self.fd.seek(0, os.SEEK_END) # go to end of file and get position
@@ -170,7 +159,7 @@ class Reader:
 					message_size = ushort(self.read(2))
 					self.seek(self.pos() + message_size) # ignore the message
 					
-					while uchar(self.read(1)) is not STATEMENT_END:
+					while uchar(self.read(1)) is not STATEMENT_END and self.pos() < self.file_size:
 						self.bad_bytes += 1
 
 					if append:

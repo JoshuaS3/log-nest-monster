@@ -13,7 +13,7 @@ def milli():
 	return int(round(time.time() * 1000))
 
 def enc(string):
-	return string.encode("latin-1")
+	return string.encode("utf-8")
 
 def ushort(n):
 	return ctypes.c_ushort(n)
@@ -56,14 +56,15 @@ if __name__ == "__main__":
 		f.write(version)
 		f.write(queue_time)
 		f.write(open_event)
-		for i in range(0, 50000):
+		for i in range(0, 10000):
 			ts = ulonglong(milli())
 
-			tag = enc("hello")#enc(s(10))
+			tag = enc(s(10))
 			tag_len = uchar(len(tag))
 
-			message = enc(s(100))
+			message = enc(s(10))
 			message_len = ushort(len(message))
+			f.write(open_event)
 			f.write(open_statement)
 			f.write(ts)
 			f.write(verbosity)
@@ -72,6 +73,7 @@ if __name__ == "__main__":
 			f.write(message_len)
 			f.write(message)
 			f.write(close_statement)
+			f.write(close_event)
 		f.write(close_event)
 
 	finally:
