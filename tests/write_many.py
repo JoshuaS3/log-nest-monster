@@ -43,11 +43,25 @@ def uchar(n):
 def ulonglong(n):
 	return ctypes.c_ulonglong(n)
 
+def s(n=20):
+	l = int(random.random()*n)
+	st = ""
+	for i in range(0, l):
+		c = 97+int(random.random()*25)
+		st += chr(c)
+	return st
+
 if __name__ == "__main__":
 	try:
 		out = sys.argv[1]
 	except:
 		print("must provide an out location")
+		exit(1)
+
+	try:
+		count = int(sys.argv[2])
+	except:
+		print("must provide a statement count")
 		exit(1)
 
 	version = uchar(1)
@@ -58,13 +72,6 @@ if __name__ == "__main__":
 	close_event = uchar(3)
 
 	verbosity = uchar(0)
-	ts = ulonglong(milli())
-
-	tag = enc("INFO")
-	tag_len = uchar(len(tag))
-
-	message = enc("Hello, World!")
-	message_len = ushort(len(message))
 
 	start = milli()
 
@@ -75,16 +82,23 @@ if __name__ == "__main__":
 		f.write(queue_time)
 
 		f.write(open_event)
+		for i in range(0, count):
+			print("{0}%".format(round((i/count)*1000)/10), end="\r")
+			ts = ulonglong(milli())
 
-		f.write(open_statement)
-		f.write(ts)
-		f.write(verbosity)
-		f.write(tag_len)
-		f.write(tag)
-		f.write(message_len)
-		f.write(message)
-		f.write(close_statement)
+			tag = enc(s(10))
+			tag_len = uchar(len(tag))
 
+			message = enc(s(20))
+			message_len = ushort(len(message)+1)
+			f.write(open_statement)
+			f.write(ts)
+			f.write(verbosity)
+			f.write(tag_len)
+			f.write(tag)
+			f.write(message_len)
+			f.write(message)
+			f.write(close_statement)
 		f.write(close_event)
 
 	finally:

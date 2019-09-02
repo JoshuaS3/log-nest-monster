@@ -47,11 +47,10 @@ class Parser:
 		for line in self.lines:
 			if l == self.clines: break
 			self.screen.move(l, 0)
-			s = ""
+			line_len = 0
 			for string in line:
 				# ("content string", "attributes string")
 				content = string[0]
-				s += content
 
 				self.screen.attrset(0)
 
@@ -86,8 +85,10 @@ class Parser:
 					if "UNDERLINE" in attr:
 						self.screen.attron(curses.A_UNDERLINE)
 
-				self.screen.addstr(content[:self.ccols - len(s)])
+				print(line_len)
+				self.screen.addstr(content[:self.ccols - line_len])
 				self.screen.attrset(0)
+				line_len += len(content)
 			l += 1
 		curses_refresh(self.screen)
 
@@ -155,6 +156,17 @@ def main():
 	display_help = "help" in options
 	display_version = "version" in options
 	is_status = "status" in options
+
+	filter_errors = "errors" in options
+	filter_warnings = "warnings" in options
+	filter_info = "info" in options
+	filter_debug = "debug" in options
+	filter_verbose = "verbose" in options
+	filter_veryverbose = "veryverbose" in options
+
+	filter_after = "after" in options
+	filter_before = "before" in options
+	filter_tag = "tag" in options
 
 	screen_size = term_size()
 	clines = screen_size[0]
@@ -226,9 +238,6 @@ def main():
 
 	if positional is "-": positional = "stdin"
 
-	output("args: " + str(options))
-	output("file: " + positional)
-
 	if positional is "stdin":
 		fd = sys.stdin
 	else:
@@ -244,10 +253,50 @@ def main():
 		p.loop()
 	else:
 		r = Reader(fd)
-		r.filter_tag = "TAG_NAME_TO_FILTER"
-		r.filter_time_start = 1567446916321
+
+		filter_verbosity_levels = []
+		if filter_errors:
+			filter_verbosity_levels.append(5)
+		if filter_warnings:
+			filter_verbosity_levels.append(4)
+		if filter_info:
+			filter_verbosity_levels.append(0)
+		if filter_debug:
+			filter_verbosity_levels.append(1)
+		if filter_verbose:
+			filter_verbosity_levels.append(2)
+		if filter_veryverbose:
+			filter_verbosity_levels.append(3)
+		if filter_verbosity_levels != []:
+			r.filter_verbosity = filter_verbosity_levels
+		else:
+			r.filter_verbosity = [0, 1, 4, 5]
+
+		if filter_after:
+			try:
+				r.filter_time_start = int(options["after"][0])
+			except:
+				output(VERSION_SHORT)
+				output(TEXT_RED + "error:" + RESET + " expected int for flag --after, got '" + options["after"][0] + "'")
+				output(HELP_MESSAGE)
+				exit(1)
+		if filter_before:
+			try:
+				r.filter_time_end = int(options["before"][0])
+			except:
+				output(VERSION_SHORT)
+				output(TEXT_RED + "error:" + RESET + " expected int for flag --before, got '" + options["before"][0] + "'")
+				output(HELP_MESSAGE)
+				exit(1)
+
+		if filter_tag:
+			r.filter_tag = str(options["tag"][0])
 		if positional is not "stdin": r.size()
+		def update():
+			print("bad bytes: {0}".format(r.bad_bytes), end="\r")
+		r.onupdate(update)
 		r.scan()
+		print("bad bytes: {0}".format(r.bad_bytes))
 
 	fd.close()
 
