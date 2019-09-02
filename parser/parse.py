@@ -244,6 +244,8 @@ def main():
 		p.loop()
 	else:
 		r = Reader(fd)
+		r.filter_tag = "TAG_NAME_TO_FILTER"
+		r.filter_time_start = 1567446916321
 		if positional is not "stdin": r.size()
 		r.scan()
 

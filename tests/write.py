@@ -1,4 +1,23 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+# lognestmonster Copyright (c) 2019 Joshua 'joshuas3' Stockin
+# <https://github.com/JoshuaS3/lognestmonster/>.
+
+
+# This file is part of lognestmonster.
+
+# lognestmonster is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# lognestmonster is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with lognestmonster. If not, see <https://www.gnu.org/licenses/>.
 
 import sys
 import os
@@ -28,7 +47,7 @@ def s(n=20):
 	l = int(random.random()*n)
 	st = ""
 	for i in range(0, l):
-		c = 97+int(random.random()*26)
+		c = 97+int(random.random()*25)
 		st += chr(c)
 	return st
 
@@ -55,16 +74,17 @@ if __name__ == "__main__":
 
 		f.write(version)
 		f.write(queue_time)
-		f.write(open_event)
-		for i in range(0, 10000):
+
+		count = 250000
+		for i in range(0, count):
+			print("{0}%".format(round((i/count)*1000)/10), end="\r")
 			ts = ulonglong(milli())
 
-			tag = enc(s(10))
+			tag = enc("TAG_NAME_TO_FILTER")
 			tag_len = uchar(len(tag))
 
-			message = enc(s(10))
+			message = enc(s(200))
 			message_len = ushort(len(message))
-			f.write(open_event)
 			f.write(open_statement)
 			f.write(ts)
 			f.write(verbosity)
@@ -73,11 +93,9 @@ if __name__ == "__main__":
 			f.write(message_len)
 			f.write(message)
 			f.write(close_statement)
-			f.write(close_event)
-		f.write(close_event)
 
 	finally:
 		f.close()
-		print("file written with size {0} in {1} seconds".format(os.stat(out).st_size, (milli()-start)/1000))
+		print("file written with size {0}MB in {1} seconds".format(round(os.stat(out).st_size/1000)/1000, (milli()-start)/1000))
 
 

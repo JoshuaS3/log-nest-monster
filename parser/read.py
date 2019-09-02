@@ -47,10 +47,10 @@ def ushort(shortv):
 
 class EventProto:
 	parent = None
-	pushed = []
+	pushed = [False]
 	def __init__(self):
 		self.parent = None
-		self.pushed = []
+		self.pushed = [False]
 
 class Reader:
 	fd = None
@@ -102,8 +102,9 @@ class Reader:
 		return is_diff
 
 	def pos(self):
-		self.position = self.fd.tell()
-		return self.position
+		p = self.fd.tell()
+		self.position = p
+		return p
 
 	def seek(self, position):
 		self.position = position
@@ -119,6 +120,14 @@ class Reader:
 	def scan(self): # scan for events and statements from self.position to the end of file
 		print()
 		print("beginning file scan")
+		if self.filter_time_start is not -1:
+			print("filter time start: {0}".format(self.filter_time_start))
+		if self.filter_time_end is not -1:
+			print("filter time end: {0}".format(self.filter_time_end))
+		if self.filter_verbosity is not -1:
+			print("filter verbosity: {0}".format(self.filter_verbosity))
+		if self.filter_tag is not -1:
+			print("filter tag: {0}".format(self.filter_tag))
 		print("file size: {0}".format(self.file_size))
 		print()
 
@@ -131,71 +140,88 @@ class Reader:
 		current_statement = None
 		current_event = None
 
-		if self.position < self.file_size: # if the seeker is before EOF
-			while self.position < self.file_size: # while the seeker is before EOF
+		if self.pos() < self.file_size: # if the seeker is before EOF
+			while self.pos() < self.file_size: # while the seeker is before EOF
 				in_byte = uchar(self.read(1)) # read 1 byte
 
 				if in_byte == STATEMENT_START: # the byte indicates a statement's start, begin interpreting
-					self.statement_count += 1
+					this_position = self.position + 1 # identify and save the seeker position of this statement
 
-					new_statement = self.position
-
-					timestamp = ulonglong(self.read(8))
-					verbosity = uchar(self.read(1))
-				
-					tag_size = uchar(self.read(1))
-					tag = self.read(tag_size).decode("utf-8")
-				
-					append = True
-					if self.filter_time_start is not -1:
-						if timestamp < self.filter_time_start: append = False
-					if self.filter_time_end is not -1:
-						if timestamp > self.filter_time_end: append = False
-					if self.filter_verbosity is not -1:
-						if verbosity is not self.filter_verbosity: append = False
-					if self.filter_tag is not -1:
-						if tag is not self.filter_tag: append = False
-
-					message_size = ushort(self.read(2))
-					self.seek(self.pos() + message_size) # ignore the message
+					try:
+						timestamp = ulonglong(self.read(8))
 					
-					while uchar(self.read(1)) is not STATEMENT_END and self.pos() < self.file_size:
-						self.bad_bytes += 1
+						append = True
 
-					if append:
-						if current_event is not None:
-							current_event.pushed.append(new_statement)
+						if self.filter_time_start is not -1 and append:
+							append = timestamp > self.filter_time_start
+
+						if self.filter_time_end is not -1 and append:
+							append = timestamp < self.filter_time_end
+
+						if self.filter_verbosity is not -1 and append:
+							verbosity = uchar(self.read(1))
+							append = verbosity in self.filter_verbosity
 						else:
-							self.top_level.append(new_statement)
+							self.seek(this_position + 9)
+
+						tag_size = uchar(self.read(1))
+						if self.filter_tag is not -1 and append:
+							if tag_size > 0:
+								tag = self.read(tag_size).decode("utf-8")
+								append = tag == self.filter_tag
+						else:
+							self.seek(this_position + 10 + tag_size)
+
+						message_size = ushort(self.read(2))
+						self.seek(this_position + 12 + tag_size + message_size) # ignore the message
+						
+						while uchar(self.read(1)) is not STATEMENT_END and self.pos() < self.file_size: # we can afford self.pos() here because most files aren't corrupt
+							self.bad_bytes += 1
+
+						if append == True:
+							self.statement_count += 1
+							if current_event is not None:
+								current_event.pushed.append(this_position)
+							else:
+								self.top_level.append(this_position)
+					except Exception as e:
+						self.bad_bytes += self.pos() - this_position
 
 				elif in_byte == EVENT_START: # the byte indicates an event's start, create an event
-					self.event_count += 1
 					new_event = EventProto()
 					if current_event is not None: # if an event exists, push the new event to it
 						new_event.parent = current_event
-						current_event.pushed.append(new_event)
 					current_event = new_event
 
 
 				elif in_byte == EVENT_END: # the byte indicates an event's end, close event if exists
-					if current_event is not None: # if an event exists
-						if current_event.parent is not None:
-							current_event = current_event.parent # if the event has a parent, set the parent to current
+					if current_event is not None:
+						if len(current_event.pushed) > 1:
+							self.event_count += 1
+							if current_event.parent is not None:
+								current_event.parent.pushed.append(current_event)
+								current_event = current_event.parent # if the event has a parent, set the parent to current
+							else:
+								self.top_level.append(current_event) # event has no parent, it's a top-level log item
+								current_event = None
 						else:
-							self.top_level.append(current_event) # event has no parent, it's a top-level log item
-							current_event = None
+							if current_event.parent is not None:
+								current_event = current_event.parent # if the event has a parent, set the parent to current
+							else:
+								current_event = None
+					else: # event doesn't exist, this end byte is out of place
+						self.bad_bytes += 1
 
-				else:
+				else: # unknown byte, not in statement or event
 					self.bad_bytes += 1
 
-				self.pos() # update seeker position for next byte (if not EOF)
-
-		print()
 		print("finished reading, {0} bad bytes".format(self.bad_bytes))
 		print()
-		print("version {0}".format(self.version))
-		print("timestamp {0}".format(self.timestamp))
-		print("event count {0}".format(self.event_count))
-		print("statement count {0}".format(self.statement_count))
-		print("time: {0}".format(time.time() - s))
+		print("tree version: {0}".format(self.version))
+		print("tree timestamp: {0}".format(self.timestamp))
+		print()
+		print("event count: {0}".format(self.event_count))
+		print("statement count: {0}".format(self.statement_count))
+		print()
+		print("time elapsed: {0}".format(time.time() - s))
 
