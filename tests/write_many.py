@@ -90,7 +90,7 @@ if __name__ == "__main__":
 			tag_len = uchar(len(tag))
 
 			message = enc(s(20))
-			message_len = ushort(len(message)+1)
+			message_len = ushort(len(message))
 			f.write(open_statement)
 			f.write(ts)
 			f.write(verbosity)

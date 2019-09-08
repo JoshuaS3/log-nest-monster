@@ -19,6 +19,7 @@
 
 import os
 import sys
+import time
 from utils import *
 from format import *
 from text import *
@@ -85,10 +86,10 @@ class Parser:
 					if "UNDERLINE" in attr:
 						self.screen.attron(curses.A_UNDERLINE)
 
-				print(line_len)
-				self.screen.addstr(content[:self.ccols - line_len])
+				out = content[:self.ccols - line_len]
+				self.screen.addstr(out)
 				self.screen.attrset(0)
-				line_len += len(content)
+				line_len += len(out)
 			l += 1
 		curses_refresh(self.screen)
 
@@ -99,7 +100,7 @@ class Parser:
 		elif input == LEFT: input = "left"
 		elif input == RIGHT: input = "right"
 		elif input == CTRLC: input = "exit"
-		else: input = str(input).lower()
+		else: input = input.decode("utf-8").lower()
 		return input
 
 	folder_name = "log_1565561768719"
@@ -119,7 +120,7 @@ class Parser:
 					[(self.title + " - ", "RESET"), (self.folder_name, "BOLD YELLOW")],
 					"Size: 235 bytes | Timestamp: 1565561768719",
 					"7 Statements | 2 Events | 0 Unsaved Data Trees",
-					pad(" STATEMENT 5 ", ":", screen_width),
+					pad(margin("STATEMENT 5"), ":", screen_width),
 					"",
 					"[[LOG START]]",
 					"v 7 ITEMS",
@@ -170,7 +171,7 @@ def main():
 
 	screen_size = term_size()
 	clines = screen_size[0]
-	ccols = screen_size[1] - 2
+	ccols = screen_size[1]
 
 	if display_help:
 		output(VERSION_SHORT)
@@ -292,11 +293,15 @@ def main():
 		if filter_tag:
 			r.filter_tag = str(options["tag"][0])
 		if positional is not "stdin": r.size()
+		output("File scan in progress...")
+		s = time.time()
 		def update():
-			print("bad bytes: {0}".format(r.bad_bytes), end="\r")
+			if r.statement_count % 100 is 0:
+				output("{0} statements | {1} events | {2} bad bytes | {3}%".format(r.statement_count, r.event_count, r.bad_bytes, round((r.position/r.file_size)*1000)/10), end="\r")
 		r.onupdate(update)
 		r.scan()
-		print("bad bytes: {0}".format(r.bad_bytes))
+		output()
+		output("Finished in {0} seconds".format(time.time() - s))
 
 	fd.close()
 

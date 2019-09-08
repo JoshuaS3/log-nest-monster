@@ -37,11 +37,11 @@ BACK_YELLOW = "\033[103m"
 BACK_MAGENTA = "\033[105m"
 BACK_CYAN = "\033[106m"
 
-UP = "\x1b[A"
-DOWN = "\x1b[B"
-RIGHT = "\x1b[C"
-LEFT = "\x1b[D"
-CTRLC = "\x03"
+UP = b"\x1b[A"
+DOWN = b"\x1b[B"
+RIGHT = b"\x1b[C"
+LEFT = b"\x1b[D"
+CTRLC = b"\x03"
 
 
 # wrap lines

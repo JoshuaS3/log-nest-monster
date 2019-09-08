@@ -142,9 +142,10 @@ class Reader:
 		return (timestamp, verbosity, tag_size, tag, message_size, message)
 
 	def parse_block(self, in_byte):
+		seekable = self.seekable
 		if in_byte == STATEMENT_START: # the byte indicates a statement's start, begin interpreting
-			if self.seekable:
-				this_position = self.position + 1 # identify and save the seeker position of this statement
+			if seekable:
+				this_position = self.pos() # identify and save the seeker position of this statement
 
 			try:
 				timestamp = ulonglong(self.read(8))
@@ -167,12 +168,12 @@ class Reader:
 					append = tag == self.filter_tag
 
 				message_size = ushort(self.read(2))
-				if self.seekable:
+				if seekable:
 					self.read(message_size)
 				else:
 					message = self.read(message_size).decode("utf-8")
 				
-				if self.seekable:
+				if seekable:
 					while uchar(self.read(1)) is not STATEMENT_END and self.pos() < self.file_size:
 						self.bad_bytes += 1
 				else:
@@ -181,14 +182,14 @@ class Reader:
 
 				if append == True:
 					self.statement_count += 1
-					self.update()
+					#self.update()
 					if self.current_event is not None:
-						if self.seekable:
+						if seekable:
 							self.current_event.pushed.append(this_position)
 						else:
 							self.current_event.pushed.append((timestamp, verbosity, tag_size, tag, message_size, message))
 					else:
-						if self.seekable:
+						if seekable:
 							self.top_level.append(this_position)
 						else:
 							self.top_level.append((timestamp, verbosity, tag_size, tag, message_size, message))

@@ -26,10 +26,10 @@ def getch(cbytes=1):
 	old_settings = termios.tcgetattr(fd)
 	try:
 		tty.setraw(fd)
-		buf = sys.stdin.read(cbytes)
+		buf = sys.stdin.read(cbytes).encode("utf-8")
 		if buf == b"\x1b": # if escaped
 			while True:
-				ch = sys.stdin.read(1)
+				ch = sys.stdin.read(1).encode("utf-8")
 				buf += ch
 				if ch.isalpha():
 					break
@@ -61,10 +61,10 @@ def array_stringify(array):
 # echo output
 
 import sys
-def output(*array):
+def output(*array, end="\n"):
 	array = array_stringify(list(array))
 	s = "".join(array)
-	sys.stdout.write(s.rstrip() + "\n")
+	sys.stdout.write(s.rstrip() + end)
 
 def output_lines(array):
 	for line in array:
@@ -76,7 +76,7 @@ def term_size():
 	lines = int(command("tput lines"))
 	cols = int(command("tput cols"))
 	if cols > 80: cols = 80
-	return (lines, cols)
+	return (lines, cols-1)
 
 # drawing
 
@@ -88,7 +88,6 @@ except ImportError:
 def curses_window():
 	# init curses
 	screen = curses.initscr()
-	curses.raw()
 	curses.start_color()
 	curses.use_default_colors()
 
