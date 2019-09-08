@@ -178,4 +178,10 @@ def main():
 
 
 if __name__ == "__main__":
-	main()
+	try:
+		main()
+	except Exception as e:
+		output(TEXT_RED + "error: " + RESET + "unhandled exception '" + str(e) + "'")
+		output("Please report this as an issue:")
+		output("<https://www.github.com/JoshuaS3/lognestmonster/issues>")
+		exit(1)
