@@ -151,6 +151,15 @@ class Parser:
 		finally:
 			curses_reset()
 
+def output_exit(error=None):
+	exitcode = 0
+	output(VERSION_SHORT)
+	if error is not None: # print argument error is exists
+		output(TEXT_RED + "error: " + RESET + error)
+		exitcode = 1
+	output(HELP_MESSAGE)
+	exit(exitcode)
+
 def main():
 	options = parseargs(sys.argv[1:])
 
@@ -176,16 +185,7 @@ def main():
 	if display_help:
 		output(VERSION_SHORT)
 
-		usage = []
-		line = "usage: lognestmonster "
-		x = len(line)
-		width = ccols - x
-		wrapped = wrap(USAGE_MESSAGE, width, "&")
-		for l in wrapped:
-			line += l
-			usage.append(line)
-			line = (" "*x)
-		output_lines(usage)
+		output("usage: lognestmonster " + USAGE_MESSAGE)
 
 		output()
 
@@ -196,8 +196,8 @@ def main():
 
 		args = []
 
-		div1 = ccols/3
-		div2 = ccols/3*2
+		div1 = int(ccols/3)
+		div2 = int(ccols/3*2)
 		for arg in ARGUMENT_OPTIONS:
 			arg_lines = []
 			indicators = wrap(", ".join(ARGUMENT_OPTIONS[arg]["indicators"]), div1)
@@ -222,20 +222,14 @@ def main():
 		output(VERSION_MESSAGE)
 		return
 	elif len(sys.argv) == 1 or type(options) is str: # argument error or no args passed
-		exitcode = 0
-		output(VERSION_SHORT)
 		if type(options) is str: # print argument error is exists
-			output(options)
-			exitcode = 1
-		output(HELP_MESSAGE)
-		exit(exitcode)
+			output_exit(options)
+		else:
+			output_exit()
 
 	positional = sys.argv[-1]
 	if positional is not "-" and os.path.isfile(positional) is not True and os.path.isdir(positional) is not True:
-		output(VERSION_SHORT)
-		output(TEXT_RED + "error:" + RESET + " file unknown '" + positional + "'")
-		output(HELP_MESSAGE)
-		exit(1)
+		output_exit("file unknown '" + positional + "'")
 
 	if positional is "-": positional = "stdin"
 
@@ -245,8 +239,7 @@ def main():
 		try:
 			fd = open(positional, "rb", buffering=8192)
 		except:
-			output(TEXT_RED + "error:" + RESET + " unable to open file")
-			exit(1)
+			output_exit("unable to open file '" + positional + "'")
 
 	if not is_status:
 		p = Parser()
@@ -270,37 +263,36 @@ def main():
 			filter_verbosity_levels.append(3)
 		if filter_verbosity_levels != []:
 			r.filter_verbosity = filter_verbosity_levels
+			r.filters = True
 		else:
-			r.filter_verbosity = [0, 1, 4, 5]
+			r.filter_verbosity = [0, 1, 2, 3, 4, 5]
 
 		if filter_after:
 			try:
 				r.filter_time_start = int(options["after"][0])
+				r.filters = True
 			except:
-				output(VERSION_SHORT)
-				output(TEXT_RED + "error:" + RESET + " expected int for flag --after, got '" + options["after"][0] + "'")
-				output(HELP_MESSAGE)
-				exit(1)
+				output_exit("expected int for flag --after, got '" + options["after"][0] + "'")
 		if filter_before:
 			try:
 				r.filter_time_end = int(options["before"][0])
+				r.filters = True
 			except:
-				output(VERSION_SHORT)
-				output(TEXT_RED + "error:" + RESET + " expected int for flag --before, got '" + options["before"][0] + "'")
-				output(HELP_MESSAGE)
-				exit(1)
+				output_exit("expected int for flag --before, got '" + options["before"][0] + "'")
 
 		if filter_tag:
 			r.filter_tag = str(options["tag"][0])
+			r.filters = True
 		if positional is not "stdin": r.size()
+		else: r.seekable = False
 		output("File scan in progress...")
 		s = time.time()
 		def update():
-			if r.statement_count % 100 is 0:
+			if r.statement_count % 200 == 0:
 				output("{0} statements | {1} events | {2} bad bytes | {3}%".format(r.statement_count, r.event_count, r.bad_bytes, round((r.position/r.file_size)*1000)/10), end="\r")
 		r.onupdate(update)
 		r.scan()
-		output()
+		output("{0} statements | {1} events | {2} bad bytes | {3}%".format(r.statement_count, r.event_count, r.bad_bytes, round((r.position/r.file_size)*1000)/10))
 		output("Finished in {0} seconds".format(time.time() - s))
 
 	fd.close()

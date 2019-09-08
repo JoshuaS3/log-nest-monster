@@ -51,6 +51,44 @@ def s(n=20):
 		st += chr(c)
 	return st
 
+open_statement = uchar(0)
+close_statement = uchar(1)
+open_event = uchar(2)
+close_event = uchar(3)
+
+def output_statement(f):
+	t = milli()
+	ts = ulonglong(t)
+
+	verbosity = uchar(round(random.random()*5))
+
+	tag = enc(s(10))
+	tag_len = uchar(len(tag))
+
+	message = enc(s(20))
+	message_len = ushort(len(message))
+	f.write(open_statement)
+	f.write(ts)
+	f.write(verbosity)
+	f.write(tag_len)
+	f.write(tag)
+	f.write(message_len)
+	f.write(message)
+	f.write(close_statement)
+
+	raw = str(t) + " - INFO - " + tag.decode("utf-8") + " - " + message.decode("utf-8") + "\n"
+	return len(raw)
+
+def block(f):
+	s_count = round(random.random()*8)
+	for i in range(0, s_count):
+		output_statement(f)
+	event_chance = (random.random()*8) > 6
+	if event_chance:
+		f.write(open_event)
+		block(f)
+		f.write(close_event)
+
 if __name__ == "__main__":
 	try:
 		out = sys.argv[1]
@@ -61,17 +99,11 @@ if __name__ == "__main__":
 	try:
 		count = int(sys.argv[2])
 	except:
-		print("must provide a statement count")
+		print("must provide a loop count")
 		exit(1)
 
 	version = uchar(1)
 	queue_time = ulonglong(milli())
-	open_statement = uchar(0)
-	close_statement = uchar(1)
-	open_event = uchar(2)
-	close_event = uchar(3)
-
-	verbosity = uchar(0)
 
 	start = milli()
 
@@ -81,28 +113,14 @@ if __name__ == "__main__":
 		f.write(version)
 		f.write(queue_time)
 
-		f.write(open_event)
 		for i in range(0, count):
 			print("{0}%".format(round((i/count)*1000)/10), end="\r")
-			ts = ulonglong(milli())
+			block(f)
 
-			tag = enc(s(10))
-			tag_len = uchar(len(tag))
-
-			message = enc(s(20))
-			message_len = ushort(len(message))
-			f.write(open_statement)
-			f.write(ts)
-			f.write(verbosity)
-			f.write(tag_len)
-			f.write(tag)
-			f.write(message_len)
-			f.write(message)
-			f.write(close_statement)
-		f.write(close_event)
 
 	finally:
 		f.close()
-		print("file written with size {0}MB in {1} seconds".format(round(os.stat(out).st_size/1000)/1000, (milli()-start)/1000))
+		size = os.stat(out).st_size
+		print("file written with size {0}MB in {1} seconds".format(round(size/1000)/1000, (milli()-start)/1000))
 
 

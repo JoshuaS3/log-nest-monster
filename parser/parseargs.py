@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with lognestmonster. If not, see <https://www.gnu.org/licenses/>.
 
-from format import *
 from args import *
 # yeah, I know argparse is a thing, but I don't like it...
 
@@ -40,10 +39,10 @@ def parseargs(argv):
 				break
 		opt = get_arg_from_indicator(arg)
 		if argn is not len(argv) - 1 and opt is None: # is a flag/option but is not the Queue
-			options = TEXT_RED + "error:" + RESET + " unknown flag/option '" + arg + "'"
+			options = "unknown flag/option '" + arg + "'"
 			return options
 		if opt in options:
-			options = TEXT_RED + "error:" + RESET + " double definition of argument '" + arg + "'"
+			options = "double definition of argument '" + arg + "'"
 			return options
 		if opt is not None: # opt _can_ be None due to the last argument being Queue
 			valcount = get_arg_valcount(opt)
@@ -54,7 +53,7 @@ def parseargs(argv):
 						options[opt].append(argv[argn + 1])
 						argn += 1
 					else:
-						options = TEXT_RED + "error:" + RESET + " argument '" + arg + "' requires " + \
+						options = "argument '" + arg + "' requires " + \
 								  str(valcount) + " " + (valcount is 1 and "value" or "values") + \
 								  ", only " + str(i-1) + " " + (i-1 is 1 and "was" or "were") + " given"
 						return options

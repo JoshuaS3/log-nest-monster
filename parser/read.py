@@ -94,6 +94,8 @@ class Reader:
 
 		self.bad_bytes = 0
 
+		self.filters = False
+
 		self.filter_time_start = -1
 		self.filter_time_end = -1
 		self.filter_verbosity = -1
@@ -148,41 +150,39 @@ class Reader:
 				this_position = self.pos() # identify and save the seeker position of this statement
 
 			try:
-				timestamp = ulonglong(self.read(8))
-				verbosity = uchar(self.read(1))
-				tag_size = uchar(self.read(1))
+				block = self.read(10)
+				timestamp = ulonglong(block[:8])
+				verbosity = block[8]
+				tag_size = block[9]
 				tag = self.read(tag_size).decode("utf-8")
 			
 				append = True
 
-				if self.filter_time_start is not -1 and append:
-					append = timestamp > self.filter_time_start
+				if self.filters:
+					if self.filter_time_start is not -1 and append:
+						append = timestamp > self.filter_time_start
 
-				if self.filter_time_end is not -1 and append:
-					append = timestamp < self.filter_time_end
+					if self.filter_time_end is not -1 and append:
+						append = timestamp < self.filter_time_end
 
-				if self.filter_verbosity is not -1 and append:
-					append = verbosity in self.filter_verbosity
+					if self.filter_verbosity is not -1 and append:
+						append = verbosity in self.filter_verbosity
 
-				if self.filter_tag is not -1 and append:
-					append = tag == self.filter_tag
+					if self.filter_tag is not -1 and append:
+						append = tag == self.filter_tag
 
 				message_size = ushort(self.read(2))
 				if seekable:
 					self.read(message_size)
-				else:
-					message = self.read(message_size).decode("utf-8")
-				
-				if seekable:
-					while uchar(self.read(1)) is not STATEMENT_END and self.pos() < self.file_size:
+					while self.read(1)[0] is not STATEMENT_END and self.pos() < self.file_size:
 						self.bad_bytes += 1
 				else:
-					while uchar(self.read(1)) is not STATEMENT_END:
+					message = self.read(message_size).decode("utf-8")
+					while self.read(1)[0] is not STATEMENT_END:
 						self.bad_bytes += 1
 
 				if append == True:
 					self.statement_count += 1
-					#self.update()
 					if self.current_event is not None:
 						if seekable:
 							self.current_event.pushed.append(this_position)
@@ -207,7 +207,6 @@ class Reader:
 			if self.current_event is not None:
 				if len(self.current_event.pushed) > 1:
 					self.event_count += 1
-					self.update()
 					if self.current_event.parent is not None:
 						self.current_event.parent.pushed.append(self.current_event)
 						self.current_event = self.current_event.parent
@@ -228,14 +227,13 @@ class Reader:
 			return -1
 
 	def scan(self): # scan for events and statements from self.position to the end of file
-		if self.position == 0 and self.seekable: # if it's the start of the file, grab version and timestamp
-			self.version = uchar(self.read(1))
+		if self.seekable and self.position == 0: # if it's the start of the file, grab version and timestamp
+			self.version = self.read(1)[0]
 			self.timestamp = ulonglong(self.read(8))
-
-		current_event = None
 
 		if self.pos() < self.file_size: # if the seeker is before EOF
 			while self.pos() < self.file_size: # while the seeker is before EOF
-				in_byte = uchar(self.read(1)) # read 1 byte
+				in_byte = self.read(1)[0] # read 1 byte
 				self.parse_block(in_byte) # parse block based on byte read
+				self.update()
 
