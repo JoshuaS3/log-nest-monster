@@ -288,12 +288,14 @@ def main():
 		output("File scan in progress...")
 		s = time.time()
 		def update():
-			if r.statement_count % 200 == 0:
+			if r.statement_count % 1000 == 0:
 				output("{0} statements | {1} events | {2} bad bytes | {3}%".format(r.statement_count, r.event_count, r.bad_bytes, round((r.position/r.file_size)*1000)/10), end="\r")
 		r.onupdate(update)
 		r.scan()
 		output("{0} statements | {1} events | {2} bad bytes | {3}%".format(r.statement_count, r.event_count, r.bad_bytes, round((r.position/r.file_size)*1000)/10))
-		output("Finished in {0} seconds".format(time.time() - s))
+		elapsed = time.time() - s
+		if elapsed > 1:
+			output("Finished in {0} seconds".format(elapsed))
 
 	fd.close()
 

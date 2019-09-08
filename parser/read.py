@@ -141,7 +141,7 @@ class Reader:
 		message_size = ushort(self.read(2))
 		message = self.read(message_size).decode("utf-8")
 		self.seek(previouspos)
-		return (timestamp, verbosity, tag_size, tag, message_size, message)
+		return (timestamp, verbosity, tag, message)
 
 	def parse_block(self, in_byte):
 		seekable = self.seekable
@@ -153,8 +153,7 @@ class Reader:
 				block = self.read(10)
 				timestamp = ulonglong(block[:8])
 				verbosity = block[8]
-				tag_size = block[9]
-				tag = self.read(tag_size).decode("utf-8")
+				tag = self.read(block[9])
 			
 				append = True
 
@@ -169,6 +168,7 @@ class Reader:
 						append = verbosity in self.filter_verbosity
 
 					if self.filter_tag is not -1 and append:
+						tag = tag.decode("utf-8")
 						append = tag == self.filter_tag
 
 				message_size = ushort(self.read(2))
@@ -187,12 +187,12 @@ class Reader:
 						if seekable:
 							self.current_event.pushed.append(this_position)
 						else:
-							self.current_event.pushed.append((timestamp, verbosity, tag_size, tag, message_size, message))
+							self.current_event.pushed.append((timestamp, verbosity, tag, message))
 					else:
 						if seekable:
 							self.top_level.append(this_position)
 						else:
-							self.top_level.append((timestamp, verbosity, tag_size, tag, message_size, message))
+							self.top_level.append((timestamp, verbosity, tag, message))
 			except:
 				return -1
 
