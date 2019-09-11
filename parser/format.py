@@ -20,6 +20,11 @@
 
 # ANSI codes for output
 
+import platform
+if platform.system() == "Windows":
+	import os
+	os.system("color")
+
 RESET = "\033[0m"
 BOLD = "\033[1m"
 UNDERLINED = "\033[4m"
