@@ -20,6 +20,7 @@
 import os
 import sys
 import time
+import traceback
 from utils import *
 from format import *
 from text import *
@@ -32,7 +33,7 @@ def output_exit(error=None):
 	exitcode = 0
 	output(VERSION_SHORT)
 	if error is not None: # print argument error is exists
-		output(TEXT_RED + "error: " + RESET + error)
+		output(TEXT_RED, "error: ", RESET, error)
 		exitcode = 1
 	output(HELP_MESSAGE)
 	exit(exitcode)
@@ -62,7 +63,7 @@ def main():
 	if display_help:
 		output(VERSION_SHORT)
 
-		output("usage: lognestmonster " + USAGE_MESSAGE)
+		output("usage: lognestmonster ", USAGE_MESSAGE)
 
 		output()
 
@@ -181,7 +182,10 @@ if __name__ == "__main__":
 	try:
 		main()
 	except Exception as e:
-		output(TEXT_RED + "error: " + RESET + "unhandled exception '" + str(e) + "'")
-		output("Please report this as an issue:")
-		output("<https://www.github.com/JoshuaS3/lognestmonster/issues>")
+		output(TEXT_RED, CONTRAST, "unhandled exception:", RESET)
+		output("-------------- EXCEPTION --------------")
+		output(traceback.format_exc())
+		output("------------ EXCEPTION END ------------")
+		output("Please report this as an issue on GitHub:")
+		output("<", TEXT_YELLOW, "https://www.github.com/JoshuaS3/lognestmonster/issues/new", RESET, ">")
 		exit(1)
