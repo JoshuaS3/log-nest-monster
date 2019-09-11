@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with lognestmonster. If not, see <https://www.gnu.org/licenses/>.
 
-
 # get character from stdin
 
 import termios, sys, tty, os, fcntl
@@ -36,18 +35,6 @@ def getch(cbytes=1):
 	finally:
 		termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 	return buf
-
-# command
-
-import subprocess
-def command(*args):
-	cmd_string = ""
-	for i in args:
-		cmd_string += i + " "
-	cmd_string.rstrip()
-	cmd_array = cmd_string.split(" ")
-	readable = subprocess.Popen(cmd_array, stdout=subprocess.PIPE)
-	return readable.stdout.read().decode("latin-1").strip()
 
 # array to string
 
@@ -72,19 +59,17 @@ def output_lines(array):
 
 # terminfo stuff
 
+from shutil import get_terminal_size
 def term_size():
-	lines = int(command("tput lines"))
-	cols = int(command("tput cols"))
+	os_ts = get_terminal_size((80, 24))
+	lines = os_ts.lines
+	cols = os_ts.columns
 	if cols > 80: cols = 80
 	return (lines, cols-1)
 
 # drawing
 
-try:
-	import curses
-except ImportError:
-	output("curses not installed. if on Windows run `pip install windows-curses`")
-	exit(1)
+import curses
 def curses_window():
 	# init curses
 	screen = curses.initscr()
