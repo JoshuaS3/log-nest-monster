@@ -2,6 +2,10 @@
 
 _Advanced node.js logging for advanced programs._
 
+# This version of the package (0.2.2) is deprecated and will soon be legacy. Please do not use this package. The next release (0.3.0) will be more complete, including a full redesign, extra language wrappers, and a parser.
+
+## For updates on the state of 0.3.0, please see the [dev branch](dev).
+
 1. [lognestmonster](#lognestmonster)
 2. [Installation](#installation)
 3. [Classes](#classes)
