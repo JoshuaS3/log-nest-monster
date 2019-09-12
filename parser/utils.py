@@ -19,22 +19,36 @@
 
 # get character from stdin
 
-import termios, sys, tty, os, fcntl
-def getch(cbytes=1):
-	fd = sys.stdin.fileno()
-	old_settings = termios.tcgetattr(fd)
-	try:
-		tty.setraw(fd)
-		buf = sys.stdin.read(cbytes).encode("utf-8")
-		if buf == b"\x1b": # if escaped
+try:
+	import termios, sys, tty
+	def getch(cbytes=1):
+		fd = sys.stdin.fileno()
+		old_settings = termios.tcgetattr(fd)
+		try:
+			tty.setraw(fd)
+			buf = sys.stdin.read(cbytes).encode("utf-8")
+			if buf == b"\x1b": # if escaped
+				while True:
+					ch = sys.stdin.read(1).encode("utf-8")
+					buf += ch
+					if ch.isalpha():
+						break
+		finally:
+			termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+		return buf
+except ImportError: # Windows NT, no term control
+	import msvrct
+	def getch(cbyte=1):
+		buf = b""
+		for x in range(0, cbyte):
+			buf += msvrct.getch().encode("utf-8")
+		if buf == b"\x1b":
 			while True:
-				ch = sys.stdin.read(1).encode("utf-8")
+				ch = msvrct.getch().encode("utf-8")
 				buf += ch
 				if ch.isalpha():
 					break
-	finally:
-		termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-	return buf
+		return buf
 
 # array to string
 
