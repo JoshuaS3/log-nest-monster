@@ -24,4 +24,4 @@ matrix:
   allow_failures:
     - os: windows
 install: pip3 install --upgrade pip
-script: test
+script: ./test
