@@ -32,6 +32,7 @@ def call(command):
 	return (code, message)
 
 commands = [
+	("", 0),
 	("--help", 0),
 	("--version", 0),
 	("--asdf", 1),
@@ -61,7 +62,7 @@ if __name__ == "__main__":
 	print("Beginning argument testing")
 	print()
 	for command in commands:
-		val = "./lognestmonster --status " + command[0] + " bin/w2.lnm"
+		val = "bash ./lognestmonster --status " + command[0] + " bin/w2.lnm"
 		response = call(val)
 		print(str(command[1]) + ": " + val)
 		if response[0] is not command[1]: # if response codes don't match up
