@@ -13,14 +13,5 @@ matrix:
       os: osx
       osx-image: xcode11
       language: shell
-    - name: "Python 3.7.4 on Windows"
-      os: windows
-      language: shell
-      before_install:
-        - choco install python
-        - python -m pip install --upgrade pip
-      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
-  allow_failures:
-    - os: windows
 install: pip3 install --upgrade pip
 script: ./test

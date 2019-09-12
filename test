@@ -3,7 +3,19 @@
 mkdir -p bin
 
 call_python() {
-	python3 $@ || python $@
+	python3 $@
+}
+
+good() {
+	echo -e "\033[92m${1}\033[0m"
+}
+
+bad() {
+	echo -e "\033[91m\033[7m${1}\033[0m"
+}
+
+warn() {
+	echo -e "\033[93m${1}\033[0m"
 }
 
 run() {
@@ -11,24 +23,24 @@ run() {
 	code=$?
 	if [ ${code} -ne 0 ]
 	then
-		echo -e "\033[91m\033[7mError in test '${1}'. Exiting...\033[0m"
+		bad "Error in test '${1}'. Exiting..."
 		exit ${code}
 	fi
 }
 
 run_tests() {
 	# Test prep (generate log files)
-	echo -e "\033[93mUndergoing test preparations\033[0m"
+	warn "Undergoing test preparations"
 	run ./tests/write.py ./bin/w1.lnm
 	run ./tests/write_many.py ./bin/w2.lnm 100
 	echo
 
 	# Unit tests
-	echo -e "\033[93mBeginning unit tests\033[0m"
+	warn "Beginning unit tests"
 	run ./tests/unit_parserargs.py
 	echo
 
-	echo -e "\033[92mFinished! Exiting with code 0...\033[0m"
+	good "Finished! Exiting with code 0..."
 }
 
 run_tests
