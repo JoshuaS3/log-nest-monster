@@ -2,7 +2,7 @@
 
 mkdir -p bin
 
-call_python() {
+py() {
 	python3 $@
 }
 
@@ -19,11 +19,11 @@ warn() {
 }
 
 run() {
-	call_python $@
+	py $@
 	code=$?
 	if [ ${code} -ne 0 ]
 	then
-		bad "Error in test '${1}'. Exiting..."
+		bad "Error in test '${@}'. Exiting..."
 		exit ${code}
 	fi
 }

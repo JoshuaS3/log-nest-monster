@@ -18,7 +18,8 @@ platform:
   - x86
 build: off
 init: ECHO %PYTHON%
+before_test:
+  - doskey python3=%PYTHON%\\python.exe %*
+  - python3 --version
 test_script:
-  - doskey python=%PYTHON%\\python.exe $*
-  - python --version
   - bash test

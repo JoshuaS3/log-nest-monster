@@ -31,7 +31,7 @@ def call(command):
 		message = "timeout or other error"
 	return (code, message)
 
-commands = [
+flags = [
 	("", 0),
 	("--help", 0),
 	("--version", 0),
@@ -61,12 +61,12 @@ if __name__ == "__main__":
 	start = time.time()
 	print("Beginning argument testing")
 	print()
-	for command in commands:
-		val = "./lognestmonster --status " + command[0] + " bin/w2.lnm"
+	for flag in flags:
+		val = "./lognestmonster --status " + flag[0] + " bin/w2.lnm"
 		response = call(val)
-		print(str(command[1]) + ": " + val)
-		if response[0] is not command[1]: # if response codes don't match up
-			print("[[ERROR: expected response code " + str(command[1]) + ", got " + str(response[0]) + "]]")
+		print(str(flag[1]) + ": " + val)
+		if response[0] is not flag[1]: # if response codes don't match up
+			print("[[ERROR: expected response code " + str(flag[1]) + ", got " + str(response[0]) + "]]")
 			print("---------- OUTPUT BEGIN ----------")
 			print(response[1])
 			print("----------- OUTPUT END -----------")
