@@ -1,0 +1,11 @@
+version: 0.1.{build}-{branch}
+branches:
+  only:
+    - master
+    - develop
+platform:
+  - x64
+  - x86
+build: off
+test_script:
+  ./test
