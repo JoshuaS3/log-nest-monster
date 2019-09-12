@@ -19,6 +19,6 @@ platform:
 build: off
 init: ECHO %PYTHON%
 test_script:
-  - doskey python=%PYTHON%\\python.exe
+  - doskey python=%PYTHON%\\python.exe $*
   - python --version
   - bash test
