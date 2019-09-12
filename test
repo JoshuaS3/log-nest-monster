@@ -19,13 +19,13 @@ run() {
 run_tests() {
 	# Test prep (generate log files)
 	echo -e "\033[93mUndergoing test preparations\033[0m"
-	run tests/write.py bin/w1.lnm
-	run tests/write_many.py bin/w2.lnm 100
+	run ./tests/write.py ./bin/w1.lnm
+	run ./tests/write_many.py ./bin/w2.lnm 100
 	echo
 
 	# Unit tests
 	echo -e "\033[93mBeginning unit tests\033[0m"
-	run tests/unit_parserargs.py
+	run ./tests/unit_parserargs.py
 	echo
 
 	echo -e "\033[92mFinished! Exitting with code 0...\033[0m"
