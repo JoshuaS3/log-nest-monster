@@ -19,8 +19,9 @@ matrix:
       before_install:
         - choco install python
         - python -m pip install --upgrade pip
+        - alias python3=python
       env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
   allow_failures:
     - os: windows
 install: pip3 install --upgrade pip
-script: python3 tests/unit_parserargs.py || python tests/unit_parserargs.py
+script: test

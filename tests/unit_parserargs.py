@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with lognestmonster. If not, see <https://www.gnu.org/licenses/>.
 
+import time
 import subprocess
 
 def call(command):
@@ -36,7 +37,11 @@ commands = [
 	("--asdf", 1),
 	("--after 10", 0),
 	("--after 10 0", 1),
-	("--after", 1),
+	("--after string", 1),
+	("--before", 1),
+	("--before 10", 0),
+	("--before 10 0", 1),
+	("--before string", 1),
 	("--status", 1),
 	("-i", 0),
 	("-e", 0),
@@ -52,17 +57,18 @@ commands = [
 
 if __name__ == "__main__":
 	exitcode = 0
+	start = time.time()
 	print("Beginning argument testing")
 	print()
 	for command in commands:
-		val = "./lognestmonster --status " + command[0] + " -"
+		val = "./lognestmonster --status " + command[0] + " bin/w2.lnm"
 		response = call(val)
 		print(str(command[1]) + ": " + val)
 		if response[0] is not command[1]: # if response codes don't match up
 			print("[[ERROR: expected response code " + str(command[1]) + ", got " + str(response[0]) + "]]")
-			print()
+			print("---------- OUTPUT BEGIN ----------")
 			print(response[1])
-			print()
+			print("----------- OUTPUT END -----------")
 			print()
 			exitcode = 1
 	print()
