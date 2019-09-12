@@ -3,9 +3,25 @@ branches:
   only:
     - master
     - develop
+environment:
+  matrix:
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python34-x64"
+    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python35-x64"
+    - PYTHON: "C:\\Python36"
+    - PYTHON: "C:\\Python36-x64"
+    - PYTHON: "C:\\Python37"
+    - PYTHON: "C:\\Python37-x64"
 platform:
   - x64
   - x86
 build: off
+init:
+  - ECHO %PYTHON%
+install:
+  - %PYTHON%\\Scripts\\pip.exe install windows-curses
 test_script:
-  ./test
+  - doskey python=%PYTHON%\\python.exe
+  - python --version
+  - bash test
