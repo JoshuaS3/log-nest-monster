@@ -19,9 +19,6 @@ matrix:
       before_install:
         - choco install python
         - python -m pip install --upgrade pip
-      script:
-        - alias python3=python
-        - ./test
       env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
   allow_failures:
     - os: windows

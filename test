@@ -3,7 +3,7 @@
 mkdir -p bin
 
 call_python() {
-	python3 $@
+	python3 $@ || python $@
 }
 
 run() {
@@ -28,7 +28,7 @@ run_tests() {
 	run ./tests/unit_parserargs.py
 	echo
 
-	echo -e "\033[92mFinished! Exitting with code 0...\033[0m"
+	echo -e "\033[92mFinished! Exiting with code 0...\033[0m"
 }
 
 run_tests
