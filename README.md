@@ -15,6 +15,9 @@ _Multilevel logging for advanced programs._
 
 # lognestmonster
 
+![linux dev](https://img.shields.io/travis/joshuas3/lognestmonster/dev?logo=travis)
+![windows dev](https://img.shields.io/appveyor/ci/joshuas3/lognestmonster/dev?logo=appveyor)
+
 ## Library Class Structure
 This is subject to future change over security concerns regarding pointers and memory allocation.
 ```
