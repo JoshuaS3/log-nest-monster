@@ -59,6 +59,7 @@ def main():
 	screen_size = term_size()
 	clines = screen_size[0]
 	ccols = screen_size[1]
+	if ccols > 80: ccols = 80
 
 	if display_help:
 		output(VERSION_SHORT)
@@ -166,11 +167,11 @@ def main():
 		output("File scan in progress...")
 		s = time.time()
 		def update():
-			if r.statement_count % 1000 == 0:
+			if r.statement_count % 500 == 0:
 				output("{0} statements | {1} events | {2} bad bytes | {3}%".format(r.statement_count, r.event_count, r.bad_bytes, round((r.position/r.file_size)*1000)/10), end="\r")
 		r.onupdate(update)
 		r.scan()
-		output("{0} statements | {1} events | {2} bad bytes | {3}%".format(r.statement_count, r.event_count, r.bad_bytes, round((r.position/r.file_size)*1000)/10))
+		output("{0} statements | {1} events | {2} bad bytes | 100.0%".format(r.statement_count, r.event_count, r.bad_bytes))
 		elapsed = time.time() - s
 		if elapsed > 1:
 			output("Finished in {0} seconds".format(elapsed))

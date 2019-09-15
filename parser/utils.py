@@ -78,7 +78,6 @@ def term_size():
 	os_ts = get_terminal_size((80, 24))
 	lines = os_ts.lines
 	cols = os_ts.columns
-	if cols > 80: cols = 80
 	return (lines, cols-1)
 
 # drawing
