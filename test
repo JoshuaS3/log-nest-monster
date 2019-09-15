@@ -6,26 +6,38 @@ py() {
 	python3 $@
 }
 
-good() {
-	echo -e "\033[92m${1}\033[0m"
+success() {
+	echo -e "\033[92m\033[1m\033[7m${@}\033[0m"
 }
 
-bad() {
-	echo -e "\033[91m\033[7m${1}\033[0m"
+success_lite() {
+	echo -e "\033[92m${@}\033[0m"
+}
+
+error() {
+	echo -e "\033[91m\033[7m\033[1m${@}\033[0m"
 }
 
 warn() {
-	echo -e "\033[93m${1}\033[0m"
+	echo -e "\033[93m\033[1m\033[7m${@}\033[0m"
+}
+
+warn_lite() {
+	echo -e "\033[93m${@}\033[0m"
 }
 
 run() {
+	warn_lite "python3 ${@}"
 	py $@
 	code=$?
 	if [ ${code} -ne 0 ]
 	then
-		bad "Error in test '${@}'. Exiting..."
+		error "Error in test '${@}'. Exiting..."
 		exit ${code}
+	else
+		success_lite "Success in test '${@}'."
 	fi
+	echo
 }
 
 run_tests() {
@@ -40,7 +52,9 @@ run_tests() {
 	run ./tests/unit_parserargs.py
 	echo
 
-	good "Finished! Exiting with code 0..."
+	success "Finished! Exiting with code 0"
 }
 
 run_tests
+
+echo -e "Time elapsed: ${SECONDS} second(s)"

@@ -70,8 +70,8 @@ if __name__ == "__main__":
 			print("---------- OUTPUT BEGIN ----------")
 			print(response[1])
 			print("----------- OUTPUT END -----------")
-			print()
 			exitcode = 1
+			break
 	print()
 	print("Finished argument testing with overall exit code " + str(exitcode))
 	exit(exitcode)
