@@ -82,7 +82,11 @@ def term_size():
 
 # drawing
 
-import curses
+try:
+	import curses
+except ImportError:
+	print("Python error: no known module `curses`. If using Windows, please install `windows-curses`.")
+	exit(1)
 def curses_window():
 	# init curses
 	screen = curses.initscr()
