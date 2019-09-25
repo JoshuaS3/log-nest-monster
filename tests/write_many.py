@@ -80,8 +80,8 @@ def output_statement(f):
 	return len(raw)
 
 def block(f):
-	s_count = round(random.random()*8)
-	for i in range(0, s_count):
+	s_count = 2+round(random.random()*8)
+	for i in range(2, s_count):
 		output_statement(f)
 	event_chance = (random.random()*8) > 6
 	if event_chance:

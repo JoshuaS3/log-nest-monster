@@ -164,14 +164,18 @@ def main():
 			r.filters = True
 		if positional is not "stdin": r.size()
 		else: r.seekable = False
-		output("File scan in progress...")
 		s = time.time()
 		def update():
-			if r.statement_count % 500 == 0:
+			if r.total_statements % 1000 == 0: # for every 1000 statements parsed
 				output("{0} statements | {1} events | {2} bad bytes | {3}%".format(r.statement_count, r.event_count, r.bad_bytes, round((r.position/r.file_size)*1000)/10), end="\r")
 		r.onupdate(update)
 		r.scan()
 		output("{0} statements | {1} events | {2} bad bytes | 100.0%".format(r.statement_count, r.event_count, r.bad_bytes))
+		output("Stats:")
+		output("  File - ", positional)
+		output("  File size - ", r.file_size, " bytes")
+		output("  Statements - {0}/{1}".format(r.statement_count, r.total_statements))
+		output("  Events - {0}/{1}".format(r.event_count, r.total_events))
 		elapsed = time.time() - s
 		if elapsed > 1:
 			output("Finished in {0} seconds".format(elapsed))

@@ -59,6 +59,9 @@ class Reader:
 	event_count = 0
 	statement_count = 0
 
+	total_events = 0
+	total_statements = 0
+
 	seekable = True
 	file_size = 0
 	position = 0
@@ -84,6 +87,9 @@ class Reader:
 
 		self.event_count = 0
 		self.statement_count = 0
+
+		self.total_events = 0
+		self.total_statements = 0
 
 		self.seekable = seekable
 		self.file_size = 0
@@ -193,6 +199,7 @@ class Reader:
 							self.top_level.append(this_position)
 						else:
 							self.top_level.append((timestamp, verbosity, tag, message))
+				self.total_statements += 1
 			except:
 				return -1
 
@@ -218,6 +225,7 @@ class Reader:
 						self.current_event = self.current_event.parent
 					else:
 						self.current_event = None
+				self.total_events += 1
 			else:
 				self.bad_bytes += 1 # event doesn't exist, bad byte
 				return -1
@@ -227,13 +235,13 @@ class Reader:
 			return -1
 
 	def scan(self): # scan for events and statements from self.position to the end of file
-		if self.seekable and self.position == 0: # if it's the start of the file, grab version and timestamp
+		if not self.seekable: raise Exception("attempting to scan non-seekable stream")
+		if self.pos() == 0: # if it's the start of the file, grab version and timestamp
 			self.version = self.read(1)[0]
 			self.timestamp = ulonglong(self.read(8))
 
-		if self.pos() < self.file_size: # if the seeker is before EOF
-			while self.pos() < self.file_size: # while the seeker is before EOF
-				in_byte = self.read(1)[0] # read 1 byte
-				self.parse_block(in_byte) # parse block based on byte read
-				self.update()
+		while self.pos() < self.file_size: # while the seeker is before EOF
+			in_byte = self.read(1)[0] # read 1 byte
+			self.parse_block(in_byte) # parse block based on byte read
+			self.update() # trigger callbacks
 

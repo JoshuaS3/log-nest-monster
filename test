@@ -44,7 +44,7 @@ run_tests() {
 	# Test prep (generate log files)
 	warn "Undergoing test preparations"
 	run ./tests/write.py ./bin/w1.lnm
-	run ./tests/write_many.py ./bin/w2.lnm 100
+	run ./tests/write_many.py ./bin/w2.lnm 1000
 	echo
 
 	# Unit tests
