@@ -18,5 +18,4 @@ platform:
   - x86
 build: off
 init: ECHO %PYTHON%
-test_script:
-  - test.cmd
+test_script: test.ps1
