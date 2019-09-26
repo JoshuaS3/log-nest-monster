@@ -18,8 +18,5 @@ platform:
   - x86
 build: off
 init: ECHO %PYTHON%
-before_test:
-  - doskey python3="%PYTHON%"
-  - python3 --version
 test_script:
-  - bash test
+  - test.cmd
