@@ -5,21 +5,21 @@ branches:
     - develop
 environment:
   matrix:
-    - PYTHON: "C:\\Python34"
-    - PYTHON: "C:\\Python34-x64"
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python35-x64"
-    - PYTHON: "C:\\Python36"
-    - PYTHON: "C:\\Python36-x64"
-    - PYTHON: "C:\\Python37"
-    - PYTHON: "C:\\Python37-x64"
+    - PYTHON: "C:\\Python34\\python.exe"
+    - PYTHON: "C:\\Python34-x64\\python.exe"
+    - PYTHON: "C:\\Python35\\python.exe"
+    - PYTHON: "C:\\Python35-x64\\python.exe"
+    - PYTHON: "C:\\Python36\\python.exe"
+    - PYTHON: "C:\\Python36-x64\\python.exe"
+    - PYTHON: "C:\\Python37\\python.exe"
+    - PYTHON: "C:\\Python37-x64\\python.exe"
 platform:
   - x64
   - x86
 build: off
 init: ECHO %PYTHON%
 before_test:
-  - alias python3=%PYTHON%\\python.exe
+  - doskey python3="%PYTHON%"
   - python3 --version
 test_script:
   - bash test
