@@ -62,7 +62,7 @@ if __name__ == "__main__":
 	print("Beginning argument testing")
 	print()
 	for flag in flags:
-		val = "./lognestmonster --status " + flag[0] + " bin/w2.lnm"
+		val = "./lognestmonster --status " + flag[0] + " bin/w1.lnm"
 		response = call(val)
 		print(str(flag[1]) + ": " + val)
 		if response[0] is not flag[1]: # if response codes don't match up
