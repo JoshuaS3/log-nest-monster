@@ -7,3 +7,6 @@ __pycache__
 
 # Lognestmonster log files
 *.lnm
+
+# Binary files
+bin/
