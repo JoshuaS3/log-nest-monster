@@ -173,12 +173,12 @@ def main():
 		output("{0} statements | {1} events | {2} bad bytes | 100.0%".format(r.statement_count, r.event_count, r.bad_bytes))
 		output("Stats:")
 		output("  File - ", positional)
-		output("  File size - ", r.file_size, " bytes")
+		output("  File size - ", bytecount_string(r.file_size))
 		output("  Statements - {0}/{1}".format(r.statement_count, r.total_statements))
 		output("  Events - {0}/{1}".format(r.event_count, r.total_events))
 		elapsed = time.time() - s
 		if elapsed > 1:
-			output("Finished in {0} seconds".format(elapsed))
+			output("Finished in {0} seconds ({1} statements per second)".format(elapsed, int(r.total_statements/elapsed)))
 
 	fd.close()
 

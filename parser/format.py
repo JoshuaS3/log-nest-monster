@@ -48,6 +48,28 @@ RIGHT = b"\x1b[C"
 LEFT = b"\x1b[D"
 CTRLC = b"\x03"
 
+# formatted byte count
+
+TB = 1024**4
+GB = 1024**3
+MB = 1024**2
+KB = 1024**1
+def bytecount_string(cbytes):
+	if cbytes > TB:
+		return str(cbytes/TB) + "TB"
+	elif cbytes > GB:
+		return str(cbytes/GB) + "GB"
+	elif cbytes > MB:
+		return str(cbytes/MB) + "MB"
+	elif cbytes > KB:
+		return str(cbytes/KB) + "KB"
+	else:
+		return str(cbytes) + "B"
+
+# truncate float to certain decimal point
+
+def truncate_decimal(f, places):
+	return int(f * (10**places)) / (10**places)
 
 # wrap lines
 

@@ -157,10 +157,10 @@ class Reader:
 
 			try:
 				block = self.read(10)
-				timestamp = ulonglong(block[:8])
-				verbosity = block[8]
-				tag = self.read(block[9])
-			
+				timestamp = ulonglong(block[:8]) # bytes 1-8
+				verbosity = block[8]             # byte  9
+				tag = self.read(block[9])        # byte  10
+
 				append = True
 
 				if self.filters:
