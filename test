@@ -40,6 +40,31 @@ run() {
 	echo
 }
 
+compile_c() {
+	warn_lite "gcc ${@}"
+	gcc $@
+	code=$?
+	if [ ${code} -ne 0 ]
+	then
+		error "Error in test '${@}'. Exiting..."
+		exit ${code}
+	else
+		success_lite "Success in test '${@}'."
+	fi
+	echo
+	warn_lite "bin/c"
+	bin/c
+	code=$?
+	if [ ${code} -ne 0 ]
+	then
+		error "Error in test 'bin/c'. Exiting..."
+		exit ${code}
+	else
+		success_lite "Success in test 'bin/c'."
+	fi
+	echo
+}
+
 run_tests() {
 	# Test prep (generate log files)
 	warn "Undergoing test preparations"
@@ -50,6 +75,7 @@ run_tests() {
 	# Unit tests
 	warn "Beginning unit tests"
 	run ./tests/unit_parserargs.py
+	compile_c ./tests/main.c -o ./bin/c -I"./src/c"
 	echo
 
 	success "Finished! Exiting with code 0"
