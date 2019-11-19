@@ -24,6 +24,11 @@
 #include "lognestmonster.h"
 
 int main(void) {
-	printf("lognestmonster C test\n");
+	printf("lognestmonster C test main()\n");
+	printf("enums:\n");
+	printf("\tInfo: %d\n\tDebug: %d\n\tVerbose: %d\n\tVeryVerbose: %d\n\tWarning: %d\n\tError: %d\n", lnmInfo, lnmDebug, lnmVerbose, lnmVeryVerbose, lnmWarning, lnmError);
+
+	lnmStatement(lnmInfo, "tag", "message");
+
 	return 0;
 }
