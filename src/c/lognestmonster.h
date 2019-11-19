@@ -54,11 +54,10 @@ lnm_pushable * lnm_new_pushable() {
 	new_pushable->pushed = malloc(0);
 	return new_pushable;
 }
-lnm_pushable * lnm_pushable_push(lnm_pushable * pushable, lnm_log_item item) {
+void lnm_pushable_push(lnm_pushable * pushable, lnm_log_item item) {
 	pushable->pushed = realloc(pushable->pushed, sizeof(lnm_log_item)*(pushable->length+1)); // reallocate with size: length+1
 	pushable->pushed[pushable->length] = item;
 	pushable->length += 1;
-	return pushable;
 }
 
 
