@@ -28,7 +28,16 @@ int main(void) {
 	printf("enums:\n");
 	printf("\tInfo: %d\n\tDebug: %d\n\tVerbose: %d\n\tVeryVerbose: %d\n\tWarning: %d\n\tError: %d\n", lnmInfo, lnmDebug, lnmVerbose, lnmVeryVerbose, lnmWarning, lnmError);
 
-	lnmStatement(lnmInfo, "tag", "message");
+	lnmItem statement = lnmStatement(lnmDebug, "tag", "message");
+	lnmItem event = lnmEvent();
+	lnmItem event2 = lnmEvent();
+	lnmEventPush(event, statement);
+
+	lnmEventPush(event2, statement);
+	lnmEventPush(event, event2);
+	lnmEventPush(event2, statement);
+
+	lnm_debug_parse(event, 0);
 
 	return 0;
 }
