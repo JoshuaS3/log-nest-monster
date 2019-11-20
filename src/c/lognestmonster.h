@@ -55,6 +55,10 @@ lnm_pushable * lnm_new_pushable() {
 	return new_pushable;
 }
 void lnm_pushable_push(lnm_pushable * pushable, lnmItem item) {
+	if (pushable->length+1 >= 65535) {
+		printf("lognestmonster: pushable reached cap length 65535");
+		exit(1);
+	}
 	pushable->pushed = realloc(pushable->pushed, sizeof(lnmItem)*(pushable->length+1)); // reallocate with size: length+1
 	pushable->pushed[pushable->length] = item;
 	pushable->length += 1;
@@ -64,7 +68,7 @@ void lnm_pushable_push(lnm_pushable * pushable, lnmItem item) {
 // Statement and event structure definitions
 
 typedef struct {
-	uint8_t          type; // Used internally; 0 = statement, 1 = event
+	uint8_t        type:1; // Used internally; 0 = statement, 1 = event
 	lnm_pushable * pushed; // array of memory locations for lnm_event and lnm_log_statement structs
 } lnm_log_event;
 
@@ -131,7 +135,12 @@ void lnmEventPush(lnmItem event, lnmItem item) {
 		printf("lognestmonster: attempt to push event to self. exiting...\n");
 		exit(1);
 	}
-	lnm_pushable_push(((lnm_log_event*)event)->pushed, item);
+	lnm_log_event * event_t = (lnm_log_event *)event;
+	if (event_t->type != 1) {
+		printf("lognestmonster: cannot cast non-event to event type. exiting...\n");
+		exit(1);
+	}
+	lnm_pushable_push(event_t->pushed, item);
 }
 
 void lnmEventPushS(lnmItem event, uint8_t verbosity, char * tag, char * message) {
