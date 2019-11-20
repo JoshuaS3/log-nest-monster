@@ -32,16 +32,16 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 
 
 // Base definitions
 
 enum lnmVerbosityLevel {lnmInfo, lnmDebug, lnmVerbose, lnmVeryVerbose, lnmWarning, lnmError};
+typedef uint8_t * lnmItem;
 
 
 // Pushable structure
-
-typedef uint8_t * lnmItem;
 
 typedef struct {
 	uint16_t length;
@@ -85,11 +85,22 @@ typedef struct {
 
 // Core library
 
+unsigned long lnm_getus(void) {
+	struct timeval current_time;
+	gettimeofday(&current_time, NULL);
+	unsigned long ms = (current_time.tv_sec*1000000+current_time.tv_usec);
+	return ms;
+}
+
+unsigned long lnm_getms(void) {
+	return lnm_getus()/1000;
+}
+
 lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message) {
 	lnm_log_statement * new_statement = malloc(sizeof(lnm_log_statement));
 	new_statement->type = 0;
 	new_statement->verbosity = verbosity;
-	new_statement->timestamp = 0;
+	new_statement->timestamp = lnm_getms();
 	int tlen = strlen(tag);
 	if (tlen > 255 || tlen < 0) {
 		printf("lognestmonster: tag length %i is longer than the cap 255 characters. exiting...\n", tlen);
@@ -108,7 +119,7 @@ lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message) {
 	return (lnmItem)new_statement;
 }
 
-lnmItem lnmEvent() {
+lnmItem lnmEvent(void) {
 	lnm_log_event * new_event = malloc(sizeof(lnm_log_event));
 	new_event->type = 1;
 	new_event->pushed = lnm_new_pushable();
@@ -150,24 +161,58 @@ void lnm_debug_parse(lnmItem item, int tabcount) {
 	if (statement->type == 0) {
 		lnm_debug_tabs(tabcount);
 		printf("Statement {\n");
+
 		lnm_debug_tabs(tabcount+1);
-		printf("Verbosity %i\n", statement->verbosity);
+		char * verbosity;
+		switch (statement->verbosity) {
+			case 0:
+				verbosity = "INFO";
+				break;
+			case 1:
+				verbosity = "DEBUG";
+				break;
+			case 2:
+				verbosity = "VERBOSE";
+				break;
+			case 3:
+				verbosity = "VERYVERBOSE";
+				break;
+			case 4:
+				verbosity = "WARNING";
+				break;
+			case 5:
+				verbosity = "ERROR";
+				break;
+		}
+		printf("Verbosity %s\n", verbosity);
+
 		lnm_debug_tabs(tabcount+1);
 		printf("Timestamp %ld\n", statement->timestamp);
+
 		lnm_debug_tabs(tabcount+1);
-		printf("Log %s\n", statement->log);
+		char tag[statement->tag_size+1];
+		strncpy(tag, statement->log, statement->tag_size);
+		tag[statement->tag_size] = '\0';
+		printf("Tag (%i) %s\n", statement->tag_size, tag);
+
+		lnm_debug_tabs(tabcount+1);
+		char message[statement->message_size+1];
+		strncpy(message, statement->log+statement->tag_size, statement->message_size);
+		message[statement->message_size] = '\0';
+		printf("Message (%i) %s\n", statement->message_size, message);
+
 		lnm_debug_tabs(tabcount);
 		printf("}\n");
 	} else if (statement->type == 1) {
 		lnm_debug_tabs(tabcount);
-		printf("Event {\n");
 		lnm_log_event * event = (lnm_log_event *) item;
+		printf("Event (%i) [\n", event->pushed->length);
 		for (int i = 0; i < event->pushed->length; i++) {
 			lnmItem item = event->pushed->pushed[i];
 			lnm_debug_parse(item, tabcount + 1);
 		}
 		lnm_debug_tabs(tabcount);
-		printf("}\n");
+		printf("]\n");
 	} else {
 		printf("Bad item type\n");
 		exit(1);
