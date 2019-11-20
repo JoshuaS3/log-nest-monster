@@ -54,14 +54,40 @@ lnm_pushable * lnm_new_pushable() {
 	new_pushable->pushed = malloc(0);
 	return new_pushable;
 }
+
 void lnm_pushable_push(lnm_pushable * pushable, lnmItem item) {
 	if (pushable->length+1 >= 65535) {
-		printf("lognestmonster: pushable reached cap length 65535");
+		printf("lognestmonster (lnm_pushable_push): pushable reached cap length 65535. exiting...\n");
 		exit(1);
 	}
 	pushable->pushed = realloc(pushable->pushed, sizeof(lnmItem)*(pushable->length+1)); // reallocate with size: length+1
 	pushable->pushed[pushable->length] = item;
 	pushable->length += 1;
+}
+
+int lnm_pushable_indexof(lnm_pushable * pushable, lnmItem item) {
+	int len = pushable->length;
+	for (int iter = 0; iter<len; iter++) {
+		if (item == pushable->pushed[iter]) return iter;
+	}
+	return -1;
+}
+
+void lnm_pushable_remove(lnm_pushable * pushable, int index) {
+	if (index>=pushable->length || index < 0) {
+		printf("lognestmonster (lnm_pushable_remove): attempt to remove index out of pushable bounds. exiting...\n");
+		exit(1);
+	}
+	lnmItem * new_pushed = malloc(sizeof(lnmItem)*(pushable->length-1)); // map array excluding index
+	for (int iter = 0; iter<index; iter++) {
+		new_pushed[iter] = pushable->pushed[iter];
+	}
+	for (int iter = index+1; iter<pushable->length; iter++) {
+		new_pushed[iter-1] = pushable->pushed[iter];
+	}
+	free(pushable->pushed);
+	pushable->length--;
+	pushable->pushed = new_pushed;
 }
 
 
@@ -87,7 +113,7 @@ typedef struct {
 } lnm_log_statement;
 
 
-// Core library
+// Library utilities
 
 unsigned long lnm_getus(void) {
 	struct timeval current_time;
@@ -100,6 +126,20 @@ unsigned long lnm_getms(void) {
 	return lnm_getus()/1000;
 }
 
+
+int lnm_isstatement(lnmItem item) {
+	lnm_log_statement * s = (lnm_log_statement *)item;
+	return !s->type;
+}
+
+
+// Item registry utils
+
+//lnm_pushable * registered_items = lnm_new_pushable();
+
+
+// Core library
+
 lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message) {
 	lnm_log_statement * new_statement = malloc(sizeof(lnm_log_statement));
 	new_statement->type = 0;
@@ -107,12 +147,12 @@ lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message) {
 	new_statement->timestamp = lnm_getms();
 	int tlen = strlen(tag);
 	if (tlen > 255 || tlen < 0) {
-		printf("lognestmonster: tag length %i is longer than the cap 255 characters. exiting...\n", tlen);
+		printf("lognestmonster (lnmStatement): tag length %i is longer than the cap 255 characters. exiting...\n", tlen);
 		exit(1);
 	}
 	int mlen = strlen(message);
 	if (mlen > 65535 || mlen < 0) {
-		printf("lognestmonster: message length %i is longer than the cap 65535 characters. exiting...\n", mlen);
+		printf("lognestmonster (lnmStatement): message length %i is longer than the cap 65535 characters. exiting...\n", mlen);
 		exit(1);
 	}
 	new_statement->tag_size = tlen;
@@ -123,6 +163,7 @@ lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message) {
 	return (lnmItem)new_statement;
 }
 
+
 lnmItem lnmEvent(void) {
 	lnm_log_event * new_event = malloc(sizeof(lnm_log_event));
 	new_event->type = 1;
@@ -132,12 +173,12 @@ lnmItem lnmEvent(void) {
 
 void lnmEventPush(lnmItem event, lnmItem item) {
 	if (event == item) {
-		printf("lognestmonster: attempt to push event to self. exiting...\n");
+		printf("lognestmonster (lnmEventPush): attempt to push event to self. exiting...\n");
 		exit(1);
 	}
 	lnm_log_event * event_t = (lnm_log_event *)event;
 	if (event_t->type != 1) {
-		printf("lognestmonster: cannot cast non-event to event type. exiting...\n");
+		printf("lognestmonster (lnmEventPush): cannot cast non-event to event type. exiting...\n");
 		exit(1);
 	}
 	lnm_pushable_push(event_t->pushed, item);
@@ -159,6 +200,7 @@ lnmItem lnmEventS(uint8_t verbosity, char * tag, char * message) {
 	return lnmEventI(statement);
 }
 
+
 void lnm_debug_tabs(int count) {
 	for (int i = 0; i < count; i++) {
 		printf("  ");
@@ -166,8 +208,8 @@ void lnm_debug_tabs(int count) {
 }
 
 void lnm_debug_parse(lnmItem item, int tabcount) {
-	lnm_log_statement * statement = (lnm_log_statement *) item;
-	if (statement->type == 0) {
+	if (lnm_isstatement(item)) {
+		lnm_log_statement * statement = (lnm_log_statement *) item;
 		lnm_debug_tabs(tabcount);
 		printf("Statement {\n");
 
@@ -212,9 +254,9 @@ void lnm_debug_parse(lnmItem item, int tabcount) {
 
 		lnm_debug_tabs(tabcount);
 		printf("}\n");
-	} else if (statement->type == 1) {
-		lnm_debug_tabs(tabcount);
+	} else if (!lnm_isstatement(item)) {
 		lnm_log_event * event = (lnm_log_event *) item;
+		lnm_debug_tabs(tabcount);
 		printf("Event (%i) [\n", event->pushed->length);
 		for (int i = 0; i < event->pushed->length; i++) {
 			lnmItem item = event->pushed->pushed[i];
@@ -223,7 +265,7 @@ void lnm_debug_parse(lnmItem item, int tabcount) {
 		lnm_debug_tabs(tabcount);
 		printf("]\n");
 	} else {
-		printf("Bad item type\n");
+		printf("lognestmonster (lnm_debug_parse): unknown item type. exiting...\n");
 		exit(1);
 	}
 }
