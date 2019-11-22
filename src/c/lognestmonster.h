@@ -39,6 +39,7 @@
 
 enum lnmVerbosityLevel {lnmInfo, lnmDebug, lnmVerbose, lnmVeryVerbose, lnmWarning, lnmError};
 typedef uint8_t * lnmItem;
+typedef uint8_t * lnmQueue;
 
 
 // Pushable structure
@@ -95,7 +96,7 @@ void lnm_pushable_remove(lnm_pushable * pushable, int index) {
 
 typedef struct {
 	uint8_t        type:1; // Used internally; 0 = statement, 1 = event
-	lnm_pushable * pushed; // array of memory locations for lnm_event and lnm_log_statement structs
+	lnm_pushable * pushed; // array of memory locations for lnm_log_event and lnm_log_statement structs
 } lnm_log_event;
 
 typedef struct {
@@ -111,6 +112,16 @@ typedef struct {
 	// word 3, 8 bytes data
 	char *   log;          // tag string + message string
 } lnm_log_statement;
+
+
+// Queue structure definition
+
+typedef struct {
+	char * name;
+	char * out_path;
+	uint64_t timestamp;
+	lnm_pushable * pushed;
+} lnm_queue;
 
 
 // Library utilities
@@ -135,10 +146,58 @@ int lnm_isstatement(lnmItem item) {
 
 // Item registry utils
 
-//lnm_pushable * registered_items = lnm_new_pushable();
+lnm_pushable * registered_queues;
+lnm_pushable * registered_items;
+
+int lnm_treescan_match(lnmItem toscan, lnmItem match) {
+
+}
+
+void lnm_registry_update(void) { // scan each registered item
+
+}
 
 
 // Core library
+
+lnmQueue lnmQueueInit(char * name, char * out_path) {
+	if (registered_queues == NULL) {
+		registered_queues = lnm_new_pushable();
+	}
+	if (registered_items == NULL) {
+		registered_items = lnm_new_pushable();
+	}
+
+	lnm_queue * new_queue = malloc(sizeof(lnm_queue));
+	new_queue->name = malloc(strlen(name)+1);
+	new_queue->out_path = malloc(strlen(out_path)+1);
+	strcpy(new_queue->name, name);
+	strcpy(new_queue->out_path, out_path);
+	new_queue->pushed = lnm_new_pushable();
+
+	lnm_pushable_push(registered_queues, (lnmQueue)new_queue);
+	return (lnmQueue)new_queue;
+}
+
+lnmQueue lnmQueueByName(char * name) {
+	if (registered_queues == NULL) {
+		printf("lognestmonster (lnmQueueByName): queue registry is nonexistant. exiting...\n");
+		exit(1);
+	}
+	if (registered_queues->length == 0) {
+		printf("lognestmonster (lnmQueueByName): queue registry is empty. exiting...\n");
+		exit(1);
+	}
+	for (int iter = 0; iter<registered_queues->length; iter++) {
+		lnm_queue * iterqueue = (lnm_queue *)registered_queues->pushed[iter];
+		if (strcmp(iterqueue->name, name)==0) {
+			return (lnmQueue)iterqueue;
+		}
+	}
+	printf("lognestmonster (lnmQueueByName): queue not found in registry. exiting...\n");
+	exit(1);
+}
+
 
 lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message) {
 	lnm_log_statement * new_statement = malloc(sizeof(lnm_log_statement));
