@@ -74,8 +74,8 @@ run_tests() {
 
 	# Unit tests
 	warn "Beginning unit tests"
-	run ./tests/unit_parserargs.py
 	compile_c ./tests/main.c -o ./bin/c -Wall -Wextra -pedantic -I"./src/c"
+	run ./tests/unit_parserargs.py
 	echo
 
 	success "Finished! Exiting with code 0"
