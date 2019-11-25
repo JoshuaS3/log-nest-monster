@@ -95,13 +95,15 @@ void lnm_pushable_remove(lnm_pushable * pushable, int index) {
 // Statement and event structure definitions
 
 typedef struct {
-	uint8_t        type:1; // Used internally; 0 = statement, 1 = event
-	lnm_pushable * pushed; // array of memory locations for lnm_log_event and lnm_log_statement structs
+	uint8_t        type:1;       // Used internally; 0 = statement, 1 = event
+	uint8_t        boolpushed:1; // whether or not this log item has been pushed
+	lnm_pushable * pushed;       // array of memory locations for lnm_log_event and lnm_log_statement structs
 } lnm_log_event;
 
 typedef struct {
 	// word 1, 4 bytes data 4 bytes padding
 	uint8_t  type:1;       // Used internally; 0 = statement, 1 = event
+	uint8_t  boolpushed:1; // whether or not this log item has been pushed
 	uint8_t  verbosity:3;  // lnmVerbosityLevel, 0-5
 	uint8_t  tag_size;     // character length of the tag
 	uint16_t message_size; // character length of the message
@@ -146,26 +148,32 @@ int lnm_isstatement(lnmItem item) {
 
 // Item registry utils
 
-lnm_pushable * registered_queues;
-lnm_pushable * registered_items;
+lnm_pushable * lnm_registered_queues;
+lnm_pushable * lnm_registered_items;
 
 int lnm_treescan_match(lnmItem toscan, lnmItem match) {
-
+	return 0;
 }
 
 void lnm_registry_update(void) { // scan each registered item
-
+	for (int iter = 0; iter < lnm_registered_items->length; iter++) {
+		lnm_log_statement * s = (lnm_log_statement *)lnm_registered_items->pushed[iter];
+		if (s->boolpushed == 1) { // if the registered item has been pushed elsewhere, remove it from the top level of the registry
+			lnm_pushable_remove(lnm_registered_items, iter);
+			iter--;
+		}
+	}
 }
 
 
 // Core library
 
 lnmQueue lnmQueueInit(char * name, char * out_path) {
-	if (registered_queues == NULL) {
-		registered_queues = lnm_new_pushable();
+	if (lnm_registered_queues == NULL) {
+		lnm_registered_queues = lnm_new_pushable();
 	}
-	if (registered_items == NULL) {
-		registered_items = lnm_new_pushable();
+	if (lnm_registered_items == NULL) {
+		lnm_registered_items = lnm_new_pushable();
 	}
 
 	lnm_queue * new_queue = malloc(sizeof(lnm_queue));
@@ -175,21 +183,21 @@ lnmQueue lnmQueueInit(char * name, char * out_path) {
 	strcpy(new_queue->out_path, out_path);
 	new_queue->pushed = lnm_new_pushable();
 
-	lnm_pushable_push(registered_queues, (lnmQueue)new_queue);
+	lnm_pushable_push(lnm_registered_queues, (lnmQueue)new_queue);
 	return (lnmQueue)new_queue;
 }
 
 lnmQueue lnmQueueByName(char * name) {
-	if (registered_queues == NULL) {
+	if (lnm_registered_queues == NULL) {
 		printf("lognestmonster (lnmQueueByName): queue registry is nonexistant. exiting...\n");
 		exit(1);
 	}
-	if (registered_queues->length == 0) {
+	if (lnm_registered_queues->length == 0) {
 		printf("lognestmonster (lnmQueueByName): queue registry is empty. exiting...\n");
 		exit(1);
 	}
-	for (int iter = 0; iter<registered_queues->length; iter++) {
-		lnm_queue * iterqueue = (lnm_queue *)registered_queues->pushed[iter];
+	for (int iter = 0; iter<lnm_registered_queues->length; iter++) {
+		lnm_queue * iterqueue = (lnm_queue *)lnm_registered_queues->pushed[iter];
 		if (strcmp(iterqueue->name, name)==0) {
 			return (lnmQueue)iterqueue;
 		}
@@ -203,7 +211,7 @@ lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message) {
 	lnm_log_statement * new_statement = malloc(sizeof(lnm_log_statement));
 	new_statement->type = 0;
 	new_statement->verbosity = verbosity;
-	new_statement->timestamp = lnm_getms();
+	new_statement->timestamp = lnm_getus();
 	int tlen = strlen(tag);
 	if (tlen > 255 || tlen < 0) {
 		printf("lognestmonster (lnmStatement): tag length %i is longer than the cap 255 characters. exiting...\n", tlen);
@@ -219,6 +227,8 @@ lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message) {
 	new_statement->log = malloc(tlen+mlen+1);
 	strcpy(new_statement->log, tag);
 	strcat(new_statement->log, message);
+	lnm_registry_update();
+	lnm_pushable_push(lnm_registered_items, new_statement);
 	return (lnmItem)new_statement;
 }
 
@@ -227,6 +237,8 @@ lnmItem lnmEvent(void) {
 	lnm_log_event * new_event = malloc(sizeof(lnm_log_event));
 	new_event->type = 1;
 	new_event->pushed = lnm_new_pushable();
+	lnm_registry_update();
+	lnm_pushable_push(lnm_registered_items, new_event);
 	return (lnmItem)new_event;
 }
 
@@ -235,12 +247,19 @@ void lnmEventPush(lnmItem event, lnmItem item) {
 		printf("lognestmonster (lnmEventPush): attempt to push event to self. exiting...\n");
 		exit(1);
 	}
+	lnm_log_statement * item_cast = (lnm_log_statement *)item;
+	if (item_cast->boolpushed == 1) {
+		printf("lognestmonster (lnmEventPush): attempt to push an already-pushed log item. exiting...\n");
+		exit(1);
+	}
 	lnm_log_event * event_t = (lnm_log_event *)event;
 	if (event_t->type != 1) {
 		printf("lognestmonster (lnmEventPush): cannot cast non-event to event type. exiting...\n");
 		exit(1);
 	}
 	lnm_pushable_push(event_t->pushed, item);
+	item_cast->boolpushed = 1;
+	lnm_registry_update();
 }
 
 void lnmEventPushS(lnmItem event, uint8_t verbosity, char * tag, char * message) {
@@ -266,7 +285,15 @@ void lnm_debug_tabs(int count) {
 	}
 }
 
-void lnm_debug_parse(lnmItem item, int tabcount) {
+void lnm_debug_parse_registry() {
+	printf("Top level registry (%i) {\n", lnm_registered_items->length);
+	for (int iter = 0; iter < lnm_registered_items->length; iter++) {
+		lnm_debug_parse_item(lnm_registered_items->pushed[iter], 1);
+	}
+	printf("}\n");
+}
+
+void lnm_debug_parse_item(lnmItem item, int tabcount) {
 	if (lnm_isstatement(item)) {
 		lnm_log_statement * statement = (lnm_log_statement *) item;
 		lnm_debug_tabs(tabcount);
@@ -319,12 +346,12 @@ void lnm_debug_parse(lnmItem item, int tabcount) {
 		printf("Event (%i) [\n", event->pushed->length);
 		for (int i = 0; i < event->pushed->length; i++) {
 			lnmItem item = event->pushed->pushed[i];
-			lnm_debug_parse(item, tabcount + 1);
+			lnm_debug_parse_item(item, tabcount + 1);
 		}
 		lnm_debug_tabs(tabcount);
 		printf("]\n");
 	} else {
-		printf("lognestmonster (lnm_debug_parse): unknown item type. exiting...\n");
+		printf("lognestmonster (lnm_debug_parse_item): unknown item type. exiting...\n");
 		exit(1);
 	}
 }
