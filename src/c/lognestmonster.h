@@ -91,6 +91,11 @@ void lnm_pushable_remove(lnm_pushable * pushable, int index) {
 	pushable->pushed = new_pushed;
 }
 
+void lnm_pushable_free(lnm_pushable * pushable) {
+	free(pushable->pushed);
+	free(pushable);
+}
+
 
 // Statement and event structure definitions
 
@@ -150,11 +155,13 @@ int lnm_isstatement(lnmItem item) {
 
 lnm_pushable * lnm_registered_queues;
 lnm_pushable * lnm_registered_items;
+static int lnm_registry_update_count;
 
 void lnm_registry_update(void) { // scan each registered item
 	for (int iter = 0; iter < lnm_registered_items->length; iter++) {
 		lnm_log_statement * s = (lnm_log_statement *)lnm_registered_items->pushed[iter];
 		if (s->boolpushed == 1) { // if the registered item has been pushed elsewhere, remove it from the top level of the registry
+			lnm_registry_update_count++;
 			lnm_pushable_remove(lnm_registered_items, iter);
 			iter--;
 		}
@@ -163,6 +170,37 @@ void lnm_registry_update(void) { // scan each registered item
 
 
 // Core library
+
+void lnm_free_item(lnmItem item) {
+	lnm_log_statement * item_cast = (lnm_log_statement *)item;
+	if (item_cast->type == 0) {
+		item_cast->boolpushed = 1; // flush item out of the registry
+		lnm_registry_update();
+
+		free(item_cast->log);
+		free(item_cast);
+	} else if (item_cast->type == 1) {
+		lnm_log_event * event_cast = (lnm_log_event *)item_cast;
+		event_cast->boolpushed = 1; // flush item out of the registry
+		lnm_registry_update();
+
+		for (int iter = 0; iter < event_cast->pushed->length; iter++) { // free logtree children
+			lnmItem newitem = event_cast->pushed->pushed[iter];
+			lnm_free_item(newitem);
+		}
+		lnm_pushable_free(event_cast->pushed);
+		free(event_cast);
+	} else {
+		printf("lognestmonster (lnm_free_item): non-log item passed to function. exiting...\n");
+	}
+}
+
+void lnm_free_registry() {
+	for (int iter = 0; iter < lnm_registered_items->length; iter++) {
+		lnm_free_item(lnm_registered_items->pushed[iter]);
+	}
+}
+
 
 lnmQueue lnmQueueInit(char * name, char * out_path) {
 	if (lnm_registered_queues == NULL) {

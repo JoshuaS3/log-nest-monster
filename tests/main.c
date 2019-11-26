@@ -62,11 +62,18 @@ int main(void) {
 	}
 	printf("\n");
 
-	printf("creating an E{S} logtree\n");
-	lnmEventS(lnmError, "Tag / Invoker", "Test statement pushed to single event with custom tag and message");
+	printf("creating an E{3S} logtree\n");
+	lnmItem event = lnmEventS(lnmError, "Tag / Invoker", "Test ERROR statement pushed to single event with custom tag and message");
+	lnmEventPushS(event, lnmInfo, "INIT", "Sample INFO/INIT log statement");
+	lnmEventPushS(event, lnmDebug, "SERVER", "DEBUG/SERVER log statement. might be found useful in a webserver backend");
 	printf("\n");
 
-	printf("debug registry logtree (1 top level item expected)\n");
+	printf("debug registry logtree (3 top level items expected)\n");
+	lnm_debug_parse_registry();
+	printf("\n");
+
+	printf("freeing registry\n");
+	lnm_free_registry();
 	lnm_debug_parse_registry();
 	printf("\n\n");
 
