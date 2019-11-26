@@ -172,25 +172,39 @@ void lnm_registry_update(void) { // scan each registered item
 
 // Core library
 
-void lnm_free_item(lnmItem item) {
+void lnm_free_item(lnmItem item) { // i'm so sorry
 	lnm_log_statement * item_cast = (lnm_log_statement *)item;
-	if (item_cast->type == 0) {
-		item_cast->boolpushed = 1; // flush item out of the registry
+	if (item_cast->boolpushed == 0) { // flush item out of registry
+		item_cast->boolpushed = 1;
 		lnm_registry_update();
-
+	}
+	if (item_cast->type == 0) {
 		free(item_cast->log);
 		free(item_cast);
 	} else if (item_cast->type == 1) {
 		lnm_log_event * event_cast = (lnm_log_event *)item_cast;
-		event_cast->boolpushed = 1; // flush item out of the registry
-		lnm_registry_update();
 
-		for (int iter = 0; iter < event_cast->pushed->length; iter++) { // free logtree children
-			lnmItem newitem = event_cast->pushed->pushed[iter];
-			lnm_free_item(newitem);
+		lnm_pushable * breadcrumb = lnm_new_pushable();
+		lnm_pushable_push(breadcrumb, (lnmItem)event_cast); // add event_cast as the first step down the breadcrumb
+		while (breadcrumb->length > 0) {                    // while there are items still in the breadcrumb
+			lnm_log_statement * breadcrumb_item = (lnm_log_statement *)breadcrumb->pushed[breadcrumb->length-1]; // fetch the last (deepest) item
+			if (breadcrumb_item->type == 0) {                          // the item is a statement
+				lnm_pushable_remove(breadcrumb, breadcrumb->length-1); // remove it from the breadcrumb
+				free(breadcrumb_item->log);                            // and free it
+				free(breadcrumb_item);
+			} else if (breadcrumb_item->type == 1) {
+				lnm_log_event * breadcrumb_item_cast = (lnm_log_event *)breadcrumb_item; // item is an event, cast pointer
+				if (breadcrumb_item_cast->pushed->length > 0) {                          // if the event is not empty
+					lnm_pushable_push(breadcrumb, breadcrumb_item_cast->pushed->pushed[breadcrumb_item_cast->pushed->length-1]); // push the last item of event into the breadcrumb
+					lnm_pushable_remove(breadcrumb_item_cast->pushed, breadcrumb_item_cast->pushed->length-1);                   // and remove it from this event's index
+					// there is now a new breadcrumb navigation layer. loop back to check the new item...
+				} else {
+					lnm_pushable_remove(breadcrumb, breadcrumb->length-1); // event is finally empty, remove it from the breadcrumb and free it
+					lnm_pushable_free(breadcrumb_item_cast->pushed);
+					free(breadcrumb_item_cast);
+				}
+			}
 		}
-		lnm_pushable_free(event_cast->pushed);
-		free(event_cast);
 	} else {
 		printf("lognestmonster (lnm_free_item): non-log item passed to function. exiting...\n");
 	}
