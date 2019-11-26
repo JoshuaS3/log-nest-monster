@@ -151,10 +151,6 @@ int lnm_isstatement(lnmItem item) {
 lnm_pushable * lnm_registered_queues;
 lnm_pushable * lnm_registered_items;
 
-int lnm_treescan_match(lnmItem toscan, lnmItem match) {
-	return 0;
-}
-
 void lnm_registry_update(void) { // scan each registered item
 	for (int iter = 0; iter < lnm_registered_items->length; iter++) {
 		lnm_log_statement * s = (lnm_log_statement *)lnm_registered_items->pushed[iter];
@@ -228,7 +224,7 @@ lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message) {
 	strcpy(new_statement->log, tag);
 	strcat(new_statement->log, message);
 	lnm_registry_update();
-	lnm_pushable_push(lnm_registered_items, new_statement);
+	lnm_pushable_push(lnm_registered_items, (lnmItem)new_statement);
 	return (lnmItem)new_statement;
 }
 
@@ -238,7 +234,7 @@ lnmItem lnmEvent(void) {
 	new_event->type = 1;
 	new_event->pushed = lnm_new_pushable();
 	lnm_registry_update();
-	lnm_pushable_push(lnm_registered_items, new_event);
+	lnm_pushable_push(lnm_registered_items, (lnmItem)new_event);
 	return (lnmItem)new_event;
 }
 
@@ -285,14 +281,6 @@ void lnm_debug_tabs(int count) {
 	}
 }
 
-void lnm_debug_parse_registry() {
-	printf("Top level registry (%i) {\n", lnm_registered_items->length);
-	for (int iter = 0; iter < lnm_registered_items->length; iter++) {
-		lnm_debug_parse_item(lnm_registered_items->pushed[iter], 1);
-	}
-	printf("}\n");
-}
-
 void lnm_debug_parse_item(lnmItem item, int tabcount) {
 	if (lnm_isstatement(item)) {
 		lnm_log_statement * statement = (lnm_log_statement *) item;
@@ -330,13 +318,13 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 		char tag[statement->tag_size+1];
 		strncpy(tag, statement->log, statement->tag_size);
 		tag[statement->tag_size] = '\0';
-		printf("Tag (%i) %s\n", statement->tag_size, tag);
+		printf("Tag (%i) \"%s\"\n", statement->tag_size, tag);
 
 		lnm_debug_tabs(tabcount+1);
 		char message[statement->message_size+1];
 		strncpy(message, statement->log+statement->tag_size, statement->message_size);
 		message[statement->message_size] = '\0';
-		printf("Message (%i) %s\n", statement->message_size, message);
+		printf("Message (%i) \"%s\"\n", statement->message_size, message);
 
 		lnm_debug_tabs(tabcount);
 		printf("}\n");
@@ -354,6 +342,14 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 		printf("lognestmonster (lnm_debug_parse_item): unknown item type. exiting...\n");
 		exit(1);
 	}
+}
+
+void lnm_debug_parse_registry() {
+	printf("Top level registry (%i) {\n", lnm_registered_items->length);
+	for (int iter = 0; iter < lnm_registered_items->length; iter++) {
+		lnm_debug_parse_item(lnm_registered_items->pushed[iter], 1);
+	}
+	printf("}\n");
 }
 
 #endif
