@@ -71,7 +71,8 @@ int lnm_pushable_indexof(lnm_pushable * pushable, lnmItem item) {
 	for (int iter = 0; iter<len; iter++) {
 		if (item == pushable->pushed[iter]) return iter;
 	}
-	return -1;
+	printf("lognestmonster (lnm_pushable_indexof): cannot find item in pushable. exiting...\n");
+	exit(1);
 }
 
 void lnm_pushable_remove(lnm_pushable * pushable, int index) {
