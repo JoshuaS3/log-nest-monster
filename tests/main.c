@@ -41,7 +41,7 @@ int main(void) {
 	printf("\n");
 
 	printf("enum lnmVerbosityLevel {\n");
-	printf("\tlnmInfo = %d,\n\tlnmDebug = %d,\n\tlnmVerbose = %d,\n\tlnmVeryVerbose = %d,\n\tlnmWarning = %d,\n\tlnmError = %d\n}\n", lnmInfo, lnmDebug, lnmVerbose, lnmVeryVerbose, lnmWarning, lnmError);
+	printf("\tlnmInfo = %i,\n\tlnmDebug = %i,\n\tlnmVerbose = %i,\n\tlnmVeryVerbose = %i,\n\tlnmWarning = %i,\n\tlnmError = %i\n}\n", lnmInfo, lnmDebug, lnmVerbose, lnmVeryVerbose, lnmWarning, lnmError);
 	printf("\n\n");
 
 	printf("core library\n");
@@ -49,7 +49,7 @@ int main(void) {
 
 	printf("creating \"%s\" queue with path \"%s\"\n", queueName, queuePath);
 	lnmQueue queue = lnmQueueInit(queueName, queuePath);
-	printf("queue \"%s\" created at 0x%lx\n", queueName, (long)queue);
+	printf("queue \"%s\" created at 0x%llx\n", queueName, (long long)queue);
 	printf("\n");
 
 	printf("checking queue integrity in registry...\n");
@@ -79,7 +79,7 @@ int main(void) {
 
 	printf("tests finished\n");
 	printf("----------------------------\n");
-	printf("time elapsed (us): %li\n", lnm_getus() - t1);
+	printf("time elapsed (us): %lu\n", lnm_getus() - t1);
 
 	return 0;
 }

@@ -30,6 +30,7 @@
 // stdc inclusions
 
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
@@ -365,26 +366,26 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 		printf("Verbosity %s\n", verbosity);
 
 		lnm_debug_tabs(tabcount+1);
-		printf("Timestamp %ld\n", statement->timestamp);
+		printf("Timestamp %" PRIu64 "\n", statement->timestamp);
 
 		lnm_debug_tabs(tabcount+1);
 		char tag[statement->tag_size+1];
 		strncpy(tag, statement->log, statement->tag_size);
 		tag[statement->tag_size] = '\0';
-		printf("Tag (%i) \"%s\"\n", statement->tag_size, tag);
+		printf("Tag (%" PRIu8 ") \"%s\"\n", statement->tag_size, tag);
 
 		lnm_debug_tabs(tabcount+1);
 		char message[statement->message_size+1];
 		strncpy(message, statement->log+statement->tag_size, statement->message_size);
 		message[statement->message_size] = '\0';
-		printf("Message (%i) \"%s\"\n", statement->message_size, message);
+		printf("Message (%" PRIu16 ") \"%s\"\n", statement->message_size, message);
 
 		lnm_debug_tabs(tabcount);
 		printf("}\n");
 	} else if (!lnm_isstatement(item)) {
 		lnm_log_event * event = (lnm_log_event *) item;
 		lnm_debug_tabs(tabcount);
-		printf("Event (%i) [\n", event->pushed->length);
+		printf("Event (%" PRIu16 ") [\n", event->pushed->length);
 		for (int i = 0; i < event->pushed->length; i++) {
 			lnmItem item = event->pushed->pushed[i];
 			lnm_debug_parse_item(item, tabcount + 1);
@@ -398,7 +399,7 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 }
 
 void lnm_debug_parse_registry() {
-	printf("Top level registry (%i) {\n", lnm_registered_items->length);
+	printf("Top level registry (%" PRIu16 ") {\n", lnm_registered_items->length);
 	for (int iter = 0; iter < lnm_registered_items->length; iter++) {
 		lnm_debug_parse_item(lnm_registered_items->pushed[iter], 1);
 	}
