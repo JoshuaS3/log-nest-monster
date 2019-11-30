@@ -80,10 +80,6 @@ lnm_pushable * lnm_new_pushable() {
 }
 
 void lnm_pushable_push(lnm_pushable * pushable, lnmItem item) {
-	if (pushable->length+1 >= 65535) {
-		printf("lognestmonster (lnm_pushable_push): pushable reached cap length 65535. exiting...\n");
-		exit(1);
-	}
 	pushable->pushed = realloc(pushable->pushed, sizeof(lnmItem)*(pushable->length+1)); // reallocate with size: length+1
 	pushable->pushed[pushable->length] = item;
 	pushable->length += 1;
@@ -234,6 +230,7 @@ void lnm_free_item(lnmItem item) { // i'm so sorry
 		}
 	} else {
 		printf("lognestmonster (lnm_free_item): non-log item passed to function. exiting...\n");
+		exit(1);
 	}
 }
 
@@ -289,13 +286,13 @@ lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message) {
 	new_statement->verbosity = verbosity;
 	new_statement->timestamp = lnm_getus();
 	int tlen = strlen(tag);
-	if (tlen > 255 || tlen < 0) {
-		printf("lognestmonster (lnmStatement): tag length %i is longer than the cap 255 characters. exiting...\n", tlen);
+	if (tlen > 256 || tlen < 0) {
+		printf("lognestmonster (lnmStatement): tag length %i is longer than the cap 256 characters. exiting...\n", tlen);
 		exit(1);
 	}
 	int mlen = strlen(message);
-	if (mlen > 65535 || mlen < 0) {
-		printf("lognestmonster (lnmStatement): message length %i is longer than the cap 65535 characters. exiting...\n", mlen);
+	if (mlen > 65536 || mlen < 0) {
+		printf("lognestmonster (lnmStatement): message length %i is longer than the cap 65536 characters. exiting...\n", mlen);
 		exit(1);
 	}
 	new_statement->tag_size = tlen;
