@@ -27,8 +27,8 @@
 
 
 // Declarations
-#ifndef __LOGNESTMONSTER__
-#define __LOGNESTMONSTER__ 1
+#ifndef LOGNESTMONSTER_H
+#define LOGNESTMONSTER_H 1
 
 // stdc inclusions
 
