@@ -68,21 +68,37 @@ void lnm_debug_parse_registry();
 // Pushable structure
 
 typedef struct {
+	uint32_t capacity;
 	uint32_t length;
 	lnmItem * pushed;
 } lnm_pushable;
 
+void lnm_pushable_realloc(lnm_pushable * pushable) {
+	if (pushable->length > pushable->capacity) {
+		if (pushable->capacity >= 4294967295) {
+			printf("lognestmonster (lnm_pushable_realloc): pushable reached max length of 2^32. exiting...\n");
+			exit(1);
+		}
+		pushable->pushed = realloc(pushable->pushed, sizeof(lnmItem) * (pushable->capacity *= 2));
+	} else if (pushable->length < (pushable->capacity / 2)) {
+		if (pushable->capacity > 8) {
+			pushable->pushed = realloc(pushable->pushed, sizeof(lnmItem) * (pushable->capacity /= 2));
+		}
+	}
+}
+
 lnm_pushable * lnm_new_pushable() {
 	lnm_pushable * new_pushable = malloc(sizeof(lnm_pushable));
+	new_pushable->capacity = 8;
 	new_pushable->length = 0;
-	new_pushable->pushed = malloc(0);
+	new_pushable->pushed = malloc(sizeof(lnmItem)*new_pushable->capacity);
 	return new_pushable;
 }
 
 void lnm_pushable_push(lnm_pushable * pushable, lnmItem item) {
-	pushable->pushed = realloc(pushable->pushed, sizeof(lnmItem)*(pushable->length+1)); // reallocate with size: length+1
-	pushable->pushed[pushable->length] = item;
-	pushable->length += 1;
+	pushable->length++;
+	lnm_pushable_realloc(pushable);
+	pushable->pushed[pushable->length-1] = item;
 }
 
 int lnm_pushable_indexof(lnm_pushable * pushable, lnmItem item) {
@@ -95,7 +111,8 @@ int lnm_pushable_indexof(lnm_pushable * pushable, lnmItem item) {
 }
 
 void lnm_pushable_pop(lnm_pushable * pushable) {
-	pushable->pushed = realloc(pushable->pushed, sizeof(lnmItem)*(pushable->length--));
+	pushable->length--;
+	lnm_pushable_realloc(pushable);
 }
 
 void lnm_pushable_remove(lnm_pushable * pushable, uint32_t index) {
@@ -103,16 +120,11 @@ void lnm_pushable_remove(lnm_pushable * pushable, uint32_t index) {
 		printf("lognestmonster (lnm_pushable_remove): attempt to remove index out of pushable bounds. exiting...\n");
 		exit(1);
 	}
-	lnmItem * new_pushed = malloc(sizeof(lnmItem)*(pushable->length-1)); // map array excluding index
-	for (uint32_t iter = 0; iter<index; iter++) {
-		new_pushed[iter] = pushable->pushed[iter];
+	for (uint32_t iter = index; iter<pushable->length-1; iter++) {
+		pushable->pushed[iter] = pushable->pushed[iter+1];
 	}
-	for (uint32_t iter = index+1; iter<pushable->length; iter++) {
-		new_pushed[iter-1] = pushable->pushed[iter];
-	}
-	free(pushable->pushed);
 	pushable->length--;
-	pushable->pushed = new_pushed;
+	lnm_pushable_realloc(pushable);
 }
 
 void lnm_pushable_free(lnm_pushable * pushable) {
@@ -408,7 +420,7 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 	} else if (!lnm_isstatement(item)) {
 		lnm_log_event * event = (lnm_log_event *) item;
 		lnm_debug_tabs(tabcount);
-		printf("Event (%" PRIu16 ") [\n", event->pushed->length);
+		printf("Event (%" PRIu32 ") [%" PRIu32 "] [\n", event->pushed->length, event->pushed->capacity);
 		for (uint32_t i = 0; i < event->pushed->length; i++) {
 			lnmItem item = event->pushed->pushed[i];
 			lnm_debug_parse_item(item, tabcount + 1);
@@ -422,7 +434,7 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 }
 
 void lnm_debug_parse_registry() {
-	printf("Top level registry (%" PRIu16 ") {\n", lnm_registered_items->length);
+	printf("Top level registry (%" PRIu32 ") [%" PRIu32 "] {\n", lnm_registered_items->length, lnm_registered_items->capacity);
 	for (uint32_t iter = 0; iter < lnm_registered_items->length; iter++) {
 		lnm_debug_parse_item(lnm_registered_items->pushed[iter], 1);
 	}
