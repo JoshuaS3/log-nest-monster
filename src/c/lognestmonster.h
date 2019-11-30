@@ -68,7 +68,7 @@ void lnm_debug_parse_registry();
 // Pushable structure
 
 typedef struct {
-	uint16_t length;
+	uint32_t length;
 	lnmItem * pushed;
 } lnm_pushable;
 
@@ -98,16 +98,16 @@ void lnm_pushable_pop(lnm_pushable * pushable) {
 	pushable->pushed = realloc(pushable->pushed, sizeof(lnmItem)*(pushable->length--));
 }
 
-void lnm_pushable_remove(lnm_pushable * pushable, int index) {
-	if (index>=pushable->length || index < 0) {
+void lnm_pushable_remove(lnm_pushable * pushable, uint32_t index) {
+	if (index>=pushable->length) {
 		printf("lognestmonster (lnm_pushable_remove): attempt to remove index out of pushable bounds. exiting...\n");
 		exit(1);
 	}
 	lnmItem * new_pushed = malloc(sizeof(lnmItem)*(pushable->length-1)); // map array excluding index
-	for (int iter = 0; iter<index; iter++) {
+	for (uint32_t iter = 0; iter<index; iter++) {
 		new_pushed[iter] = pushable->pushed[iter];
 	}
-	for (int iter = index+1; iter<pushable->length; iter++) {
+	for (uint32_t iter = index+1; iter<pushable->length; iter++) {
 		new_pushed[iter-1] = pushable->pushed[iter];
 	}
 	free(pushable->pushed);
@@ -182,7 +182,7 @@ static lnm_pushable * lnm_registered_items;
 static int lnm_registry_update_count;
 
 void lnm_registry_update(void) { // scan each registered item
-	for (int iter = 0; iter < lnm_registered_items->length; iter++) {
+	for (uint32_t iter = 0; iter < lnm_registered_items->length; iter++) {
 		lnm_log_statement * s = (lnm_log_statement *)lnm_registered_items->pushed[iter];
 		if (s->boolpushed == 1) { // if the registered item has been pushed elsewhere, remove it from the top level of the registry
 			lnm_registry_update_count++;
@@ -235,7 +235,7 @@ void lnm_free_item(lnmItem item) { // i'm so sorry
 }
 
 void lnm_free_registry() {
-	for (int iter = 0; iter < lnm_registered_items->length; iter++) {
+	for (uint32_t iter = 0; iter < lnm_registered_items->length; iter++) {
 		lnm_free_item(lnm_registered_items->pushed[iter]);
 	}
 }
@@ -269,7 +269,7 @@ lnmQueue lnmQueueByName(char * name) {
 		printf("lognestmonster (lnmQueueByName): queue registry is empty. exiting...\n");
 		exit(1);
 	}
-	for (int iter = 0; iter<lnm_registered_queues->length; iter++) {
+	for (uint32_t iter = 0; iter<lnm_registered_queues->length; iter++) {
 		lnm_queue * iterqueue = (lnm_queue *)lnm_registered_queues->pushed[iter];
 		if (strcmp(iterqueue->name, name)==0) {
 			return (lnmQueue)iterqueue;
@@ -409,7 +409,7 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 		lnm_log_event * event = (lnm_log_event *) item;
 		lnm_debug_tabs(tabcount);
 		printf("Event (%" PRIu16 ") [\n", event->pushed->length);
-		for (int i = 0; i < event->pushed->length; i++) {
+		for (uint32_t i = 0; i < event->pushed->length; i++) {
 			lnmItem item = event->pushed->pushed[i];
 			lnm_debug_parse_item(item, tabcount + 1);
 		}
@@ -423,7 +423,7 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 
 void lnm_debug_parse_registry() {
 	printf("Top level registry (%" PRIu16 ") {\n", lnm_registered_items->length);
-	for (int iter = 0; iter < lnm_registered_items->length; iter++) {
+	for (uint32_t iter = 0; iter < lnm_registered_items->length; iter++) {
 		lnm_debug_parse_item(lnm_registered_items->pushed[iter], 1);
 	}
 	printf("}\n");
