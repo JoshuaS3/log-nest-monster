@@ -20,28 +20,49 @@
 // You should have received a copy of the GNU General Public License
 // along with lognestmonster. If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef __LOGNESTMONSTER__
-#define __LOGNESTMONSTER__ 1
 
 // SEMANTICS
 // internal definitions: lnm_lower_camel_case
 // public definitions:   lnmUpperCamelCase
 
+
+// Declarations
+#ifndef __LOGNESTMONSTER__
+#define __LOGNESTMONSTER__ 1
+
 // stdc inclusions
 
 #include <stdint.h>
-#include <stdio.h>
 #include <inttypes.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// non-universal inclusions
+
 #include <sys/time.h>
 
-
-// Base definitions
 
 enum lnmVerbosityLevel {lnmInfo, lnmDebug, lnmVerbose, lnmVeryVerbose, lnmWarning, lnmError};
 typedef uint8_t * lnmItem;
 typedef uint8_t * lnmQueue;
+
+lnmQueue lnmQueueInit(char * name, char * out_path);
+lnmQueue lnmQueueByName(char * name);
+lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message);
+lnmItem lnmEvent(void);
+void lnmEventPush(lnmItem event, lnmItem item);
+void lnmEventPushS(lnmItem event, uint8_t verbosity, char * tag, char * message);
+lnmItem lnmEventI(lnmItem item);
+lnmItem lnmEventS(uint8_t verbosity, char * tag, char * message);
+
+void lnm_debug_parse_item();
+void lnm_debug_parse_registry();
+
+#endif
+
+
+#ifdef DEFINE_LOGNESTMONSTER // one-time definitions
 
 
 // Pushable structure
@@ -156,8 +177,8 @@ int lnm_isstatement(lnmItem item) {
 
 // Item registry utils
 
-lnm_pushable * lnm_registered_queues;
-lnm_pushable * lnm_registered_items;
+static lnm_pushable * lnm_registered_queues;
+static lnm_pushable * lnm_registered_items;
 static int lnm_registry_update_count;
 
 void lnm_registry_update(void) { // scan each registered item
@@ -407,4 +428,4 @@ void lnm_debug_parse_registry() {
 	printf("}\n");
 }
 
-#endif
+#endif // DEFINE_LOGNESTMONSTER

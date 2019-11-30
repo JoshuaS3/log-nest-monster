@@ -74,7 +74,7 @@ run_tests() {
 
 	# Unit tests
 	warn "Beginning unit tests"
-	compile_c ./tests/main.c -o ./bin/c -Wall -Wextra -Werror -pedantic -I"./src/c"
+	compile_c ./tests/main.c ./tests/main_test.c -o ./bin/c -Wall -Wextra -Werror -pedantic -I"./src/c"
 	run ./tests/unit_parserargs.py
 	echo
 

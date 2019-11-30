@@ -21,12 +21,16 @@
 // along with lognestmonster. If not, see <https://www.gnu.org/licenses/>.
 
 #include <stdio.h>
+
+#define DEFINE_LOGNESTMONSTER
 #include "lognestmonster.h"
 
-static char * queueName = "master";
+void test(void);
+extern char * queueName;
 static char * queuePath = "~/path";
 
 int main(void) {
+	queueName = "master";
 	long t1 = lnm_getus();
 
 	printf("lognestmonster C test main()\n");
@@ -68,8 +72,12 @@ int main(void) {
 	lnmEventPushS(event, lnmDebug, "SERVER", "DEBUG/SERVER log statement. might be found useful in a webserver backend");
 	printf("\n");
 
-	printf("debug registry logtree (3 top level items expected)\n");
+	printf("debug registry logtree (1 top level items expected)\n");
 	lnm_debug_parse_registry();
+	printf("\n");
+
+	printf("calling test function from different source file\n");
+	test();
 	printf("\n");
 
 	printf("freeing registry\n");
