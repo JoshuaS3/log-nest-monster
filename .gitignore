@@ -1,5 +1,5 @@
-# Sublime Text Project
-*.sublime*
+# VIM temp files
+*.swp
 
 # Cached Python files
 __pycache__
