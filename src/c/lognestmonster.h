@@ -26,6 +26,10 @@
 // public definitions:   lnmUpperCamelCase
 
 
+#ifdef __cplusplus // Linker protection
+extern "C" {
+#endif
+
 // Declarations
 #ifndef LOGNESTMONSTER_H
 #define LOGNESTMONSTER_H 1
@@ -458,3 +462,7 @@ void lnm_debug_parse_queue(lnmQueue queue) {
 	printf("]\n");
 }
 #endif // DEFINE_LOGNESTMONSTER
+
+#ifdef __cplusplus // Linker protection
+}
+#endif
