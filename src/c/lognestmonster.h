@@ -252,6 +252,14 @@ void lnm_free_registry() {
 	}
 }
 
+void lnm_free_queue(lnmQueue queue) {
+	lnm_queue * queue_cast = (lnm_queue *)queue;
+	for (uint32_t iter = 0; iter < queue_cast->pushed->length; iter++) {
+		lnm_free_item(queue_cast->pushed->pushed[iter]);
+		lnm_pushable_remove(queue_cast->pushed, iter--);
+	}
+}
+
 
 lnmQueue lnmQueueInit(char * name, char * out_path) {
 	if (lnm_registered_queues == NULL) {
@@ -266,6 +274,7 @@ lnmQueue lnmQueueInit(char * name, char * out_path) {
 	new_queue->out_path = malloc(strlen(out_path)+1);
 	strcpy(new_queue->name, name);
 	strcpy(new_queue->out_path, out_path);
+	new_queue->timestamp = lnm_getus();
 	new_queue->pushed = lnm_new_pushable();
 
 	lnm_pushable_push(lnm_registered_queues, (lnmQueue)new_queue);
@@ -289,6 +298,16 @@ lnmQueue lnmQueueByName(char * name) {
 	}
 	printf("lognestmonster (lnmQueueByName): queue not found in registry. exiting...\n");
 	exit(1);
+}
+
+void lnmQueuePush(lnmQueue queue, lnmItem item) {
+	if (((lnm_log_statement *)item)->boolpushed == 1) {
+		printf("lognestmonster (lnmQueuePush): attempt to push an already-pushed log item. exiting...\n");
+		exit(1);
+	}
+	lnm_pushable_push(((lnm_queue *)queue)->pushed, item);
+	((lnm_log_statement *)item)->boolpushed = 1;
+	lnm_registry_update();
 }
 
 
@@ -374,9 +393,7 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 	if (lnm_isstatement(item)) {
 		lnm_log_statement * statement = (lnm_log_statement *) item;
 		lnm_debug_tabs(tabcount);
-		printf("Statement {\n");
 
-		lnm_debug_tabs(tabcount+1);
 		char * verbosity;
 		switch (statement->verbosity) {
 			case 0:
@@ -398,25 +415,16 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 				verbosity = "ERROR";
 				break;
 		}
-		printf("Verbosity %s\n", verbosity);
 
-		lnm_debug_tabs(tabcount+1);
-		printf("Timestamp %" PRIu64 "\n", statement->timestamp);
-
-		lnm_debug_tabs(tabcount+1);
 		char tag[statement->tag_size+1];
 		strncpy(tag, statement->log, statement->tag_size);
 		tag[statement->tag_size] = '\0';
-		printf("Tag (%" PRIu8 ") \"%s\"\n", statement->tag_size, tag);
 
-		lnm_debug_tabs(tabcount+1);
 		char message[statement->message_size+1];
 		strncpy(message, statement->log+statement->tag_size, statement->message_size);
 		message[statement->message_size] = '\0';
-		printf("Message (%" PRIu16 ") \"%s\"\n", statement->message_size, message);
 
-		lnm_debug_tabs(tabcount);
-		printf("}\n");
+		printf("%" PRIu64 " (%s) %s :: %s\n", statement->timestamp, verbosity, tag, message);
 	} else if (!lnm_isstatement(item)) {
 		lnm_log_event * event = (lnm_log_event *) item;
 		lnm_debug_tabs(tabcount);
@@ -434,11 +442,19 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 }
 
 void lnm_debug_parse_registry() {
-	printf("Top level registry (%" PRIu32 ") [%" PRIu32 "] {\n", lnm_registered_items->length, lnm_registered_items->capacity);
+	printf("Top level registry (%" PRIu32 ") [%" PRIu32 "] [\n", lnm_registered_items->length, lnm_registered_items->capacity);
 	for (uint32_t iter = 0; iter < lnm_registered_items->length; iter++) {
 		lnm_debug_parse_item(lnm_registered_items->pushed[iter], 1);
 	}
-	printf("}\n");
+	printf("]\n");
 }
 
+void lnm_debug_parse_queue(lnmQueue queue) {
+	lnm_queue * queue_cast = (lnm_queue *)queue;
+	printf("Queue \"%s\" at %s (%" PRIu32 ") [%" PRIu32 "] [\n", queue_cast->name, queue_cast->out_path, queue_cast->pushed->length, queue_cast->pushed->capacity);
+	for (uint32_t iter = 0; iter < queue_cast->pushed->length; iter++) {
+		lnm_debug_parse_item((lnmItem)queue_cast->pushed->pushed[iter], 1);
+	}
+	printf("]\n");
+}
 #endif // DEFINE_LOGNESTMONSTER

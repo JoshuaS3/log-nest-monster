@@ -66,13 +66,42 @@ int main(void) {
 	}
 	printf("\n");
 
-	printf("creating an E{3S} logtree\n");
-	lnmItem event = lnmEventS(lnmError, "Tag / Invoker", "Test ERROR statement pushed to single event with custom tag and message");
+	printf("creating an E{2S, E{1S}, 1S} logtree\n");
+	lnmItem event = lnmEventS(lnmError, "INVOKER", "Test ERROR statement pushed to single event with custom tag and message");
 	lnmEventPushS(event, lnmInfo, "INIT", "Sample INFO/INIT log statement");
-	lnmEventPushS(event, lnmDebug, "SERVER", "DEBUG/SERVER log statement. might be found useful in a webserver backend");
+
+	lnmItem event2 = lnmEventS(lnmVerbose, "NESTED", "Example of a nested log statement");
+	lnmEventPushS(event2, lnmVeryVerbose, "NESTED", "Nested #2");
+
+	lnmEventPush(event, event2);
+
+	lnmEventPushS(event2, lnmInfo, "TEST", "Item #3");
+	lnmEventPushS(event2, lnmInfo, "TEST", "Item #4");
+
+	lnmItem event3 = lnmEventS(lnmWarning, "NESTED-2", "Third layer log statement");
+	lnmEventPush(event2, event3);
+
+	lnmEventPushS(event2, lnmInfo, "TEST", "Item #6");
+	lnmEventPushS(event2, lnmInfo, "TEST", "Item #7");
+	lnmEventPushS(event2, lnmInfo, "TEST", "Item #8");
+	lnmEventPushS(event2, lnmInfo, "TEST", "Item #9 (frame capacity doubles from 8 to 16)");
+
+	lnmEventPushS(event, lnmDebug, "REQUEST", "DEBUG/REQUEST log statement. might be found useful in a webserver backend");
 	printf("\n");
 
 	printf("debug registry logtree (1 top level items expected)\n");
+	lnm_debug_parse_registry();
+	printf("\n");
+
+	printf("push event to queue\n");
+	lnmQueuePush(queue, event);
+	printf("\n");
+
+	printf("debug queue (master)\n");
+	lnm_debug_parse_queue(queue);
+	printf("\n");
+
+	printf("debug registry logtree (0 top level items expected)\n");
 	lnm_debug_parse_registry();
 	printf("\n");
 
@@ -80,9 +109,12 @@ int main(void) {
 	test();
 	printf("\n");
 
-	printf("freeing registry\n");
-	lnm_free_registry();
-	lnm_debug_parse_registry();
+	printf("freeing queue\n");
+	lnm_free_queue(queue);
+	printf("\n");
+
+	printf("debug queue (master, 0 items expected)\n");
+	lnm_debug_parse_queue(queue);
 	printf("\n\n");
 
 	printf("tests finished\n");
