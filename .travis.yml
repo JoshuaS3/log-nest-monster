@@ -1,17 +1,2 @@
-language: python
-python:
-  - "3.4"
-  - "3.5"
-  - "3.6"
-  - "3.7"
-  - "3.7-dev"
-  - "3.8-dev"
-  - "nightly"
-matrix:
-  include:
-    - name: "Python 3.7.4 on macOS"
-      os: osx
-      osx-image: xcode11
-      language: shell
-install: pip3 install --upgrade pip
-script: ./test
+compiler: gcc
+script: ./test c_unit

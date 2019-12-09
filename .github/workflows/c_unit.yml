@@ -1,0 +1,15 @@
+name: C Header Unit Tests
+on:
+    push:
+        paths:
+            - 'src/c/*'
+            - 'tests/'
+            - 'test'
+jobs:
+    build:
+        name: Build and Test
+        runs-on: [ubuntu-latest]
+        steps:
+            - uses: actions/checkout@v1
+            - name: Make and run unit test output binary
+              run: ./test c_unit

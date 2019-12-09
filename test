@@ -2,10 +2,6 @@
 
 mkdir -p bin
 
-py() {
-	python3 $@
-}
-
 success() {
 	echo -e "\033[92m\033[1m\033[7m${@}\033[0m"
 }
@@ -26,61 +22,37 @@ warn_lite() {
 	echo -e "\033[93m${@}\033[0m"
 }
 
-run() {
-	warn_lite "python3 ${@}"
-	py $@
-	code=$?
-	if [ ${code} -ne 0 ]
+exit_on_error() {
+	if [ $1 -ne 0 ]
 	then
-		error "Error in test '${@}'. Exiting..."
-		exit ${code}
+		error "Error in test. Exiting..."
+		exit $1
 	else
-		success_lite "Success in test '${@}'."
+		success_lite "Success in test."
 	fi
-	echo
 }
 
-compile_c() {
-	warn_lite "gcc ${@}"
-	gcc $@
-	code=$?
-	if [ ${code} -ne 0 ]
-	then
-		error "Error in test '${@}'. Exiting..."
-		exit ${code}
-	else
-		success_lite "Success in test '${@}'."
-	fi
-	echo
-	warn_lite "bin/c"
-	bin/c
-	code=$?
-	if [ ${code} -ne 0 ]
-	then
-		error "Error in test 'bin/c'. Exiting..."
-		exit ${code}
-	else
-		success_lite "Success in test 'bin/c'."
-	fi
-	echo
+handle() {
+	$1
+	exit_on_error $?
 }
 
-run_tests() {
-	# Test prep (generate log files)
-	warn "Undergoing test preparations"
-	run ./tests/write.py ./bin/w1.lnm
-	run ./tests/write_many.py ./bin/w2.lnm 1000
+c_unit() {
+	warn "Running C unit test chain"
 	echo
 
-	# Unit tests
-	warn "Beginning unit tests"
-	compile_c ./tests/main.c ./tests/main_test.c -o ./bin/c -Wall -Wextra -Werror -pedantic -I"./src/c"
-	run ./tests/unit_parserargs.py
+	# Compile C unit tests
+	warn_lite "Making C header unit test"
+	handle make c_unit
 	echo
 
-	success "Finished! Exiting with code 0"
+	warn_lite "Running C header unit test"
+	handle bin/c
+	echo
+	
+	success "Finished"
 }
 
-run_tests
+$1
 
 echo -e "Time elapsed: ${SECONDS} second(s)"
