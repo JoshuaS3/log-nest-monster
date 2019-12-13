@@ -22,7 +22,8 @@
 
 #include <stdio.h>
 
-#define DEFINE_LOGNESTMONSTER
+#define LNM_INIT
+#define LNM_ALL
 #include "lognestmonster.h"
 
 void test(void);

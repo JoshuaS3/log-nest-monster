@@ -60,18 +60,53 @@ void lnmEventPushS(lnmItem event, uint8_t verbosity, char * tag, char * message)
 lnmItem lnmEventI(lnmItem item);
 lnmItem lnmEventS(uint8_t verbosity, char * tag, char * message);
 
-void lnm_debug_parse_item();
-void lnm_debug_parse_registry();
+#ifdef LNM_ALL // Exposes the private API declarations
 
-#endif
+// Pushable utilities
+typedef struct lnm_pushable lnm_pushable;
+
+void lnm_pushable_realloc(lnm_pushable * pushable);
+lnm_pushable * lnm_new_pushable(void);
+void lnm_pushable_push(lnm_pushable * pushable, lnmItem item);
+int lnm_pushable_indexof(lnm_pushable * pushable, lnmItem item);
+void lnm_pushable_pop(lnm_pushable * pushable);
+void lnm_pushable_remove(lnm_pushable * pushable, uint32_t index);
+void lnm_pushable_free(lnm_pushable * pushable);
+
+// Log item and object struct types
+typedef struct lnm_log_event lnm_log_event;
+typedef struct lnm_log_statement lnm_log_statement;
+typedef struct lnm_queue lnm_queue;
+
+// General utilities
+unsigned long lnm_getus(void);
+unsigned long lnm_getms(void);
+int lnm_isstatement(lnmItem item);
+
+// Registry utilities
+void lnm_registry_update(void);
+
+// Memory utilities
+void lnm_free_item(lnmItem item);
+void lnm_free_registry(void);
+void lnm_free_queue(lnmQueue queue);
+
+// Debug utilities
+void lnm_debug_tabs(int count);
+void lnm_debug_parse_item(lnmItem item, int tabcount);
+void lnm_debug_parse_registry(void);
+void lnm_debug_parse_queue(lnmQueue queue);
+
+#endif // LNM_ALL, private declarations
+#endif // LOGNESTMONSTER_H, public declarations
 
 
-#ifdef DEFINE_LOGNESTMONSTER // one-time definitions
+#ifdef LNM_INIT // one-time definitions
 
 
 // Pushable structure
 
-typedef struct {
+typedef struct lnm_pushable {
 	uint32_t capacity;
 	uint32_t length;
 	lnmItem * pushed;
@@ -79,8 +114,8 @@ typedef struct {
 
 void lnm_pushable_realloc(lnm_pushable * pushable) {
 	if (pushable->length > pushable->capacity) {
-		if (pushable->capacity >= 4294967295) {
-			printf("lognestmonster (lnm_pushable_realloc): pushable reached max length of 2^32. exiting...\n");
+		if (pushable->capacity * 2 <= pushable->capacity) {
+			printf("lognestmonster (lnm_pushable_realloc): pushable reached max length of 2^32-1. exiting...\n");
 			exit(1);
 		}
 		pushable->pushed = realloc(pushable->pushed, sizeof(lnmItem) * (pushable->capacity *= 2));
@@ -91,7 +126,7 @@ void lnm_pushable_realloc(lnm_pushable * pushable) {
 	}
 }
 
-lnm_pushable * lnm_new_pushable() {
+lnm_pushable * lnm_new_pushable(void) {
 	lnm_pushable * new_pushable = malloc(sizeof(lnm_pushable));
 	new_pushable->capacity = 8;
 	new_pushable->length = 0;
@@ -139,13 +174,20 @@ void lnm_pushable_free(lnm_pushable * pushable) {
 
 // Statement and event structure definitions
 
-typedef struct {
+typedef struct lnm_log_event {
+	// word 1, 1 byte data 7 bytes padding
 	uint8_t        type:1;       // Used internally; 0 = statement, 1 = event
 	uint8_t        boolpushed:1; // whether or not this log item has been pushed
+	uint8_t        verbosity:3;  // lnmVerbosityLevel, 0-5
+
+	// word 2, 8 bytes data
+	char *         tag;          // tag string
+
+	// word 3, 8 bytes data
 	lnm_pushable * pushed;       // array of memory locations for lnm_log_event and lnm_log_statement structs
 } lnm_log_event;
 
-typedef struct {
+typedef struct lnm_log_statement {
 	// word 1, 4 bytes data 4 bytes padding
 	uint8_t  type:1;       // Used internally; 0 = statement, 1 = event
 	uint8_t  boolpushed:1; // whether or not this log item has been pushed
@@ -163,7 +205,7 @@ typedef struct {
 
 // Queue structure definition
 
-typedef struct {
+typedef struct lnm_queue {
 	char * name;
 	char * out_path;
 	uint64_t timestamp;
@@ -211,7 +253,7 @@ void lnm_registry_update(void) { // scan each registered item
 
 // Core library
 
-void lnm_free_item(lnmItem item) { // i'm so sorry
+void lnm_free_item(lnmItem item) {
 	lnm_log_statement * item_cast = (lnm_log_statement *)item;
 	if (item_cast->boolpushed == 0) { // flush item out of registry
 		item_cast->boolpushed = 1;
@@ -445,7 +487,7 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 	}
 }
 
-void lnm_debug_parse_registry() {
+void lnm_debug_parse_registry(void) {
 	printf("Top level registry (%" PRIu32 ") [%" PRIu32 "] [\n", lnm_registered_items->length, lnm_registered_items->capacity);
 	for (uint32_t iter = 0; iter < lnm_registered_items->length; iter++) {
 		lnm_debug_parse_item(lnm_registered_items->pushed[iter], 1);
