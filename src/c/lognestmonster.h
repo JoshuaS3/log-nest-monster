@@ -53,7 +53,7 @@ typedef uint8_t * lnmQueue;
 
 lnmQueue lnmQueueInit(char * name, char * out_path);
 lnmQueue lnmQueueByName(char * name);
-lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message);
+lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * tag, char * message);
 lnmItem lnmEvent(void);
 void lnmEventPush(lnmItem event, lnmItem item);
 void lnmEventPushS(lnmItem event, uint8_t verbosity, char * tag, char * message);
@@ -357,7 +357,7 @@ void lnmQueuePush(lnmQueue queue, lnmItem item) {
 }
 
 
-lnmItem lnmStatement(uint8_t verbosity, char * tag, char * message) {
+lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * tag, char * message) {
 	lnm_log_statement * new_statement = malloc(sizeof(lnm_log_statement));
 	new_statement->type = 0;
 	new_statement->verbosity = verbosity;
