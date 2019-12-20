@@ -4,6 +4,7 @@ all: tests
 tests: c_unit
 
 c_unit:
+	mkdir -p bin/
 	gcc -o bin/c tests/main.c tests/main_test.c -Wall -Wextra -Werror -pedantic -I"./src/c"
 
 clean:
