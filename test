@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-mkdir -p bin
-
 success() {
 	echo -e "\033[92m\033[1m\033[7m${@}\033[0m"
 }
@@ -37,6 +35,10 @@ handle() {
 	exit_on_error $?
 }
 
+help() {
+	echo "Usage: ./test [help] [c_unit]"
+}
+
 c_unit() {
 	warn "Running C unit test chain"
 	echo
@@ -53,6 +55,9 @@ c_unit() {
 	success "Finished"
 }
 
-$1
+for test in "$@"
+do
+	$test
+done
 
-echo -e "Time elapsed: ${SECONDS} second(s)"
+echo -e "finished: ${SECONDS} seconds"
