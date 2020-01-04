@@ -1,6 +1,7 @@
-// lognestmonster Copyright (c) 2020 Joshua 'joshuas3' Stockin (copyrighted under the MIT License)
+// lognestmonster Copyright (c) 2020 Joshua 'joshuas3' Stockin
 // <https://joshstock.in>
 // <https://github.com/JoshuaS3/lognestmonster>
+// This software is licensed under the MIT License.
 //
 // main.c
 // C file for testing the lognestmonster library header
