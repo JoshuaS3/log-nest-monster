@@ -15,6 +15,8 @@ _Multilevel logging for advanced programs._
 
 # lognestmonster
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a8578620f39f48cc961ca023390781f0)](https://app.codacy.com/manual/JoshuaS3/lognestmonster?utm_source=github.com&utm_medium=referral&utm_content=JoshuaS3/lognestmonster&utm_campaign=Badge_Grade_Dashboard)
+
 ![linux dev](https://img.shields.io/travis/joshuas3/lognestmonster/dev?logo=travis)
 ![windows dev](https://img.shields.io/appveyor/ci/joshuas3/lognestmonster/dev?logo=appveyor)
 
