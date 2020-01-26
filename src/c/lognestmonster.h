@@ -1,28 +1,42 @@
-// lognestmonster Copyright (c) 2020 Joshua 'joshuas3' Stockin
-// <https://joshstock.in>
-// <https://github.com/JoshuaS3/lognestmonster>
-//
-// This software is licensed under the MIT License.
-// ----- BEGIN LICENSE -----
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-// ----- END LICENSE -----
-//
+/* lognestmonster Copyright (c) 2020 Joshua 'joshuas3' Stockin
+ * <https://joshstock.in>
+ * <https://github.com/JoshuaS3/lognestmonster>
+ *
+ * This software is licensed and distributed under the terms of the MIT License:
+ * ----- BEGIN LICENSE -----
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * ----- END LICENSE -----
+ *
+ * This comment block MUST be preserved in all copies of this software's source.
+ */
+
 // lognestmonster.h
 // C header file for implementation of the lognestmonster logging library
 
+#ifdef __cplusplus // Linker protection
+extern "C" {
+#endif
 
 // SEMANTICS
 // internal definitions: lnm_lower_camel_case
 // public definitions:   lnmUpperCamelCase
 
-
-#ifdef __cplusplus // Linker protection
-extern "C" {
-#endif
 
 // Declarations
 #ifndef LOGNESTMONSTER_H
