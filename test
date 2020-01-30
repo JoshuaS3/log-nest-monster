@@ -36,7 +36,7 @@ handle() {
 }
 
 help() {
-	echo "Usage: ./test [help] [c_unit]"
+	echo "Usage: ./test [help] [c_unit] [size]"
 }
 
 c_unit() {
@@ -52,6 +52,17 @@ c_unit() {
 	handle bin/c
 	echo
 	
+	success "Finished"
+}
+
+size() {
+	warn "Running size test on optimization levels"
+	echo
+
+	warn_lite "Compiling and getting file sizes"
+	handle tests/size.py
+	echo
+
 	success "Finished"
 }
 
