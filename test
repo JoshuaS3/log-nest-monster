@@ -36,7 +36,7 @@ handle() {
 }
 
 help() {
-	echo "Usage: ./test [help] [c_unit] [size]"
+	echo "Usage: ./test [help] [c_unit] [size] [lint]"
 }
 
 c_unit() {
@@ -51,7 +51,21 @@ c_unit() {
 	warn_lite "Running C header unit test"
 	handle bin/c
 	echo
-	
+
+	success "Finished"
+}
+
+lint() {
+	warn "Running lint test"
+	echo
+
+	find . -name "*.c" -print0 | while read -d $'\0' file
+	do
+		warn_lite "Executing gcc --syntax-only $file"
+		handle "gcc --syntax-only -pedantic -Wall -Wextra -I src/c $file"
+		echo
+	done
+
 	success "Finished"
 }
 

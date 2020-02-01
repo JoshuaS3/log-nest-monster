@@ -38,4 +38,4 @@ if __name__ == "__main__":
     for optimization in COPTIMIZATIONS:
         out_file = f"{OUT_FILE}{optimization}"
         gcc_compile(out_file, optimization)
-        print(f"{out_file}: {get_size(out_file)} bytes")
+        print(f"Level {optimization}: {get_size(out_file)}")
