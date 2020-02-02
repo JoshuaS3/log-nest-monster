@@ -17,11 +17,8 @@
   <a href="https://app.codacy.com/manual/JoshuaS3/lognestmonster/dashboard">
     <img src="https://img.shields.io/codacy/grade/15048b0c7728497394651e295d61746b/dev?logo=codacy&style=flat-square"/>
   </a>
-  <a href="https://travis-ci.com/JoshuaS3/lognestmonster">
-    <img src="https://img.shields.io/travis/joshuas3/lognestmonster/dev?logo=travis&style=flat-square"/>
-  </a>
   <a href="https://github.com/JoshuaS3/lognestmonster/actions">
-    <img src="https://img.shields.io/github/workflow/status/JoshuaS3/lognestmonster/C Header Unit Tests?label=C%20Header%20Unit%20Tests&logo=github&style=flat-square"/>
+    <img src="https://img.shields.io/github/workflow/status/JoshuaS3/lognestmonster/C Header Unit Tests?label=Unit%20Test%20Chain&logo=github&style=flat-square"/>
   </a>
 <p>
 
