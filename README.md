@@ -49,6 +49,35 @@ pertains a number of features:
 
 _**(WIP)** Not yet meant for development or production use_
 
+## Performance at Different Optimization Levels
+
+Output of `./test performance` as of commit `b54160c`:
+
+Optimization Level | Header Binary Size\* (in bytes) | Unit Test Runtime\*\* (in µs)
+------------------ | ------------------------------- | -----------------------------
+-O0                | 22552                           | 70
+-O1                | 18424                           | 67
+-O2                | 22520                           | 69
+-O3                | 26760                           | 68
+-Os                | 18424                           | 69
+
+\*Header binary size is measured by compilation of the following source file:
+
+```c
+// tests/header_only.c
+#define LNM_INIT
+#include "lognestmonster.h"
+
+int main(void) {
+    return 0;
+}
+```
+
+\*\*Median taken from 200 trials run in sequence to account for variable processor
+conditions and behaviors. Run on a mid-tier 3.3GHz processor (i5-4590). Runtime
+is measured by the execution and output of [the header's unit
+test](tests/header_unit.c).
+
 ## Copyright
 
 This package is copyrighted by [Joshua 'joshuas3'
