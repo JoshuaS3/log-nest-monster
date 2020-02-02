@@ -11,5 +11,5 @@ jobs:
         runs-on: [ubuntu-latest]
         steps:
             - uses: actions/checkout@v1
-            - name: Make and run unit test output binary
-              run: ./test c_unit
+            - name: Run testing chain
+              run: ./test lint c_unit performance
