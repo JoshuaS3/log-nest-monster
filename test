@@ -20,8 +20,10 @@ warn_lite() {
 	echo -e "\033[93m${@}\033[0m"
 }
 
-exit_on_error() {
-	if [ $1 -ne 0 ]
+handle() {
+	echo $1
+	$1
+	if [ $? -ne 0 ]
 	then
 		error "Error in test. Exiting..."
 		exit $1
@@ -30,13 +32,8 @@ exit_on_error() {
 	fi
 }
 
-handle() {
-	$1
-	exit_on_error $?
-}
-
 help() {
-	echo "Usage: ./test [help] [c_unit] [size] [lint]"
+	echo "Usage: ./test [help] [c_unit] [performance] [lint]"
 }
 
 c_unit() {
@@ -45,7 +42,7 @@ c_unit() {
 
 	# Compile C unit tests
 	warn_lite "Making C header unit test"
-	handle make c_unit
+	handle "gcc -pedantic -Wall -Wextra -Werror -o bin/c -I src/c tests/header_unit.c tests/header_unit_2.c"
 	echo
 
 	warn_lite "Running C header unit test"
@@ -69,12 +66,12 @@ lint() {
 	success "Finished"
 }
 
-size() {
-	warn "Running size test on optimization levels"
+performance() {
+	warn "Running performance test"
 	echo
 
 	warn_lite "Compiling and getting file sizes"
-	handle tests/size.py
+	handle tests/performance.py
 	echo
 
 	success "Finished"
