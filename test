@@ -42,6 +42,7 @@ c_unit() {
 
 	# Compile C unit tests
 	warn_lite "Making C header unit test"
+	mkdir -p bin
 	handle "gcc -pedantic -Wall -Wextra -Werror -o bin/c -I src/c tests/header_unit.c tests/header_unit_2.c"
 	echo
 
