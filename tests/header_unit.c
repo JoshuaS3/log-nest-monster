@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 #define LNM_INIT
-#define LNM_ALL
+#define LNM_DEBUG
 #include "lognestmonster.h"
 
 void test(void);
@@ -28,7 +28,7 @@ int main(void) {
 	printf("data testing\n");
 	printf("----------------------------\n");
 
-	printf("word size/ptr length: %li\n", sizeof(lnmItem));
+	printf("word size/ptr length: %lu\n", sizeof(lnmItem));
 	printf("\n");
 
 	printf("enum lnmVerbosityLevel {\n");
@@ -54,10 +54,10 @@ int main(void) {
 	printf("\n");
 
 	printf("creating an E{2S, E{1S}, 1S} logtree\n");
-	lnmItem event = lnmEventS(lnmError, "INVOKER", "Test ERROR statement pushed to single event with custom tag and message");
+	lnmItem event = lnmEventS("event_tag", lnmError, "INVOKER", "Test ERROR statement pushed to single event with custom tag and message");
 	lnmEventPushS(event, lnmInfo, "INIT", "Sample INFO/INIT log statement");
 
-	lnmItem event2 = lnmEventS(lnmVerbose, "NESTED", "Example of a nested log statement");
+	lnmItem event2 = lnmEventS("event 2", lnmVerbose, "NESTED", "Example of a nested log statement");
 	lnmEventPushS(event2, lnmVeryVerbose, "NESTED", "Nested #2");
 
 	lnmEventPush(event, event2);
@@ -65,7 +65,7 @@ int main(void) {
 	lnmEventPushS(event2, lnmInfo, "TEST", "Item #3");
 	lnmEventPushS(event2, lnmInfo, "TEST", "Item #4");
 
-	lnmItem event3 = lnmEventS(lnmWarning, "NESTED-2", "Third layer log statement");
+	lnmItem event3 = lnmEventS("asdf", lnmWarning, "NESTED-2", "Third layer log statement");
 	lnmEventPush(event2, event3);
 
 	lnmEventPushS(event2, lnmInfo, "TEST", "Item #6");

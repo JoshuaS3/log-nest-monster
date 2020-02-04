@@ -23,182 +23,202 @@
  * SOFTWARE.
  * ----- END LICENSE -----
  *
- * This comment block MUST be preserved in all copies of this software's source.
+ * This comment block and its contents, including this disclaimer, MUST be
+ * preserved in all copies or distributions of this software's source.
  */
 
 // lognestmonster.h
 // C header file for implementation of the lognestmonster logging library
 
-#ifdef __cplusplus // Linker protection
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-// SEMANTICS
-// internal definitions: lnm_lower_camel_case
-// public definitions:   lnmUpperCamelCase
 
-
-// Declarations
 #ifndef LOGNESTMONSTER_H
 #define LOGNESTMONSTER_H 1
 
-// stdc inclusions
 
-#include <stdint.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-// non-universal inclusions
-
-#include <sys/time.h>
+#include <stdint.h>  // necessary include for type declaration
 
 
 enum lnmVerbosityLevel {lnmInfo, lnmDebug, lnmVerbose, lnmVeryVerbose, lnmWarning, lnmError};
 typedef uint8_t * lnmItem;
 typedef uint8_t * lnmQueue;
 
+
 lnmQueue lnmQueueInit(char * name, char * out_path);
 lnmQueue lnmQueueByName(char * name);
+
 lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * tag, char * message);
-lnmItem lnmEvent(void);
+
+lnmItem lnmEvent(char * tag);
+lnmItem lnmEventI(char * event_tag, lnmItem item);
+lnmItem lnmEventS(char * event_tag, enum lnmVerbosityLevel verbosity, char * statement_tag, char * message);
 void lnmEventPush(lnmItem event, lnmItem item);
-void lnmEventPushS(lnmItem event, uint8_t verbosity, char * tag, char * message);
-lnmItem lnmEventI(lnmItem item);
-lnmItem lnmEventS(uint8_t verbosity, char * tag, char * message);
+void lnmEventPushS(lnmItem event, enum lnmVerbosityLevel verbosity, char * tag, char * message);
 
-#ifdef LNM_ALL // Exposes the private API declarations
 
-// Pushable utilities
+#ifdef LNM_ALL  // expose private utilities
+
+// type definitions
 typedef struct lnm_pushable lnm_pushable;
-
-void lnm_pushable_realloc(lnm_pushable * pushable);
-lnm_pushable * lnm_new_pushable(void);
-void lnm_pushable_push(lnm_pushable * pushable, lnmItem item);
-int lnm_pushable_indexof(lnm_pushable * pushable, lnmItem item);
-void lnm_pushable_pop(lnm_pushable * pushable);
-void lnm_pushable_remove(lnm_pushable * pushable, uint32_t index);
-void lnm_pushable_free(lnm_pushable * pushable);
-
-// Log item and object struct types
 typedef struct lnm_log_event lnm_log_event;
 typedef struct lnm_log_statement lnm_log_statement;
 typedef struct lnm_queue lnm_queue;
 
-// General utilities
-unsigned long lnm_getus(void);
-unsigned long lnm_getms(void);
-int lnm_isstatement(lnmItem item);
+// lnm_pushable utilities
+lnm_pushable * lnm_new_pushable(void);
+void lnm_pushable_realloc(lnm_pushable * pushable);
+void lnm_pushable_push(lnm_pushable * pushable, lnmItem item);
+void lnm_pushable_pop(lnm_pushable * pushable);
+void lnm_pushable_remove(lnm_pushable * pushable, uint32_t index);
+void lnm_pushable_free(lnm_pushable * pushable);
 
-// Registry utilities
+// misc utilities
+unsigned long lnm_getus(void);
+
+// registry utilities
 void lnm_registry_update(void);
 
-// Memory utilities
+// memory management utilities
 void lnm_free_item(lnmItem item);
 void lnm_free_registry(void);
 void lnm_free_queue(lnmQueue queue);
 
-// Debug utilities
-void lnm_debug_tabs(int count);
-void lnm_debug_parse_item(lnmItem item, int tabcount);
+#endif  // LNM_ALL
+
+
+#if defined(LNM_DEBUG) || defined(LNM_ALL)
+void lnm_debug_tabs(int tab_count);
+void lnm_debug_parse_item(lnmItem item, int tab_count);
 void lnm_debug_parse_registry(void);
 void lnm_debug_parse_queue(lnmQueue queue);
-
-#endif // LNM_ALL, private declarations
-#endif // LOGNESTMONSTER_H, public declarations
+#endif  // LNM_DEBUG || LNM_ALL
 
 
-#ifdef LNM_INIT // one-time definitions
+#ifdef LNM_INIT  // define the library
 
 
-// Pushable structure
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+static const uint8_t LNM_STATEMENT = 0;
+static const uint8_t LNM_EVENT = 1;
+
+
+// lnm_pushable utilities
+
 
 typedef struct lnm_pushable {
 	uint32_t capacity;
 	uint32_t length;
-	lnmItem * pushed;
+	lnmItem * frame;
 } lnm_pushable;
+
 
 void lnm_pushable_realloc(lnm_pushable * pushable) {
 	if (pushable->length > pushable->capacity) {
-		if (pushable->capacity * 2 <= pushable->capacity) {
-			printf("lognestmonster (lnm_pushable_realloc): pushable reached max length of 2^32-1. exiting...\n");
-			exit(1);
+		if (pushable->capacity > UINT32_MAX / 2) {
+			printf("lognestmonster (lnm_pushable_realloc): pushable reached max capacity of 2^32-1. exiting...\n");
+			abort();
 		}
-		pushable->pushed = realloc(pushable->pushed, sizeof(lnmItem) * (pushable->capacity *= 2));
+		pushable->frame = realloc(pushable->frame, sizeof(lnmItem) * (pushable->capacity *= 2));
+		if (pushable->frame == NULL) {
+			printf("lognestmonster (lnm_pushable_realloc): call to realloc() returned NULL. exiting...\n");
+			abort();
+		}
 	} else if (pushable->length < (pushable->capacity / 2)) {
 		if (pushable->capacity > 8) {
-			pushable->pushed = realloc(pushable->pushed, sizeof(lnmItem) * (pushable->capacity /= 2));
+			pushable->frame = realloc(pushable->frame, sizeof(lnmItem) * (pushable->capacity /= 2));
+			if (pushable->frame == NULL) {
+				printf("lognestmonster (lnm_pushable_realloc): call to realloc() returned NULL. exiting...\n");
+				abort();
+			}
 		}
 	}
 }
 
+
 lnm_pushable * lnm_new_pushable(void) {
 	lnm_pushable * new_pushable = malloc(sizeof(lnm_pushable));
+	if (new_pushable == NULL) {
+		printf("lognestmonster (lnm_new_pushable): call to malloc() returned NULL. exiting...\n");
+		abort();
+	}
 	new_pushable->capacity = 8;
 	new_pushable->length = 0;
-	new_pushable->pushed = malloc(sizeof(lnmItem)*new_pushable->capacity);
+	new_pushable->frame = malloc(sizeof(lnmItem) * 8);
+	if (new_pushable->frame == NULL) {
+		printf("lognestmonster (lnm_new_pushable): call to malloc() returned NULL. exiting...\n");
+		abort();
+	}
 	return new_pushable;
 }
+
 
 void lnm_pushable_push(lnm_pushable * pushable, lnmItem item) {
 	pushable->length++;
 	lnm_pushable_realloc(pushable);
-	pushable->pushed[pushable->length-1] = item;
+	pushable->frame[pushable->length - 1] = item;
 }
 
-int lnm_pushable_indexof(lnm_pushable * pushable, lnmItem item) {
-	int len = pushable->length;
-	for (int iter = 0; iter<len; iter++) {
-		if (item == pushable->pushed[iter]) return iter;
-	}
-	printf("lognestmonster (lnm_pushable_indexof): cannot find item in pushable. exiting...\n");
-	exit(1);
-}
 
 void lnm_pushable_pop(lnm_pushable * pushable) {
 	pushable->length--;
 	lnm_pushable_realloc(pushable);
 }
 
+
 void lnm_pushable_remove(lnm_pushable * pushable, uint32_t index) {
-	if (index>=pushable->length) {
+	if (index >= pushable->length) {
 		printf("lognestmonster (lnm_pushable_remove): attempt to remove index out of pushable bounds. exiting...\n");
-		exit(1);
+		abort();
 	}
-	for (uint32_t iter = index; iter<pushable->length-1; iter++) {
-		pushable->pushed[iter] = pushable->pushed[iter+1];
+	if (index == pushable->length - 1) {
+		lnm_pushable_pop(pushable);
+	} else {
+		// shift entire array from index until end
+		for (uint32_t iter = index; iter < pushable->length - 1; iter++) {
+			pushable->frame[iter] = pushable->frame[iter + 1];
+		}
+		pushable->length--;
+		lnm_pushable_realloc(pushable);
 	}
-	pushable->length--;
-	lnm_pushable_realloc(pushable);
 }
 
+
 void lnm_pushable_free(lnm_pushable * pushable) {
-	free(pushable->pushed);
+	free(pushable->frame);
 	free(pushable);
 }
 
 
-// Statement and event structure definitions
+// log event and log statement definitions
+
 
 typedef struct lnm_log_event {
 	// word 1, 1 byte data 7 bytes padding
-	uint8_t        type:1;       // Used internally; 0 = statement, 1 = event
-	uint8_t        boolpushed:1; // whether or not this log item has been pushed
-	uint8_t        verbosity:3;  // lnmVerbosityLevel, 0-5
+	uint8_t        type:1;      // used internally; 0 = statement, 1 = event
+	uint8_t        pushed:1;    // whether or not this log item has been pushed
+	uint8_t        verbosity:3; // lnmVerbosityLevel, 0-5
 
 	// word 2, 8 bytes data
-	char *         tag;          // tag string
+	char *         tag;         // null-terminated tag string
 
 	// word 3, 8 bytes data
-	lnm_pushable * pushed;       // array of memory locations for lnm_log_event and lnm_log_statement structs
+	lnm_pushable * pushable;    // pushable of lnmItems
 } lnm_log_event;
+
 
 typedef struct lnm_log_statement {
 	// word 1, 4 bytes data 4 bytes padding
-	uint8_t  type:1;       // Used internally; 0 = statement, 1 = event
-	uint8_t  boolpushed:1; // whether or not this log item has been pushed
+	uint8_t  type:1;       // used internally; 0 = statement, 1 = event
+	uint8_t  pushed:1;     // whether or not this log item has been pushed
 	uint8_t  verbosity:3;  // lnmVerbosityLevel, 0-5
 	uint8_t  tag_size;     // character length of the tag
 	uint16_t message_size; // character length of the message
@@ -207,50 +227,70 @@ typedef struct lnm_log_statement {
 	uint64_t timestamp;    // 64-bit millisecond timestamp
 
 	// word 3, 8 bytes data
-	char *   log;          // tag string + message string
+	char *   log;          // non-null-terminated tag string + non-null-terminated message string
 } lnm_log_statement;
 
 
-// Queue structure definition
+// queue structure definition
+
 
 typedef struct lnm_queue {
 	char * name;
 	char * out_path;
 	uint64_t timestamp;
-	lnm_pushable * pushed;
+	lnm_pushable * pushable;
 } lnm_queue;
 
 
-// Library utilities
+// time utilities
 
-unsigned long lnm_getus(void) {
-	struct timeval current_time;
-	gettimeofday(&current_time, NULL);
-	unsigned long ms = (current_time.tv_sec*1000000+current_time.tv_usec);
-	return ms;
+
+#if defined(__unix__) || defined(unix) || defined(__unix) || defined(__CYGWIN__)
+#include <sys/time.h>
+static struct timeval lnm_current_time;
+#elif defined(_WIN32) || defined(__WINDOWS__)
+#include <sysinfoapi.h>
+static FILETIME lnm_win32_filetime;
+#else
+#error lognestmonster: Windows NT or a POSIX-compliant system were not detected. Implement your own system time functions or compile on a compliant system.
+#endif
+
+
+uint64_t lnm_getus(void) {
+	uint64_t us;
+#if defined(__unix__) || defined(unix) || defined(__unix) || defined(__CYGWIN__)
+	gettimeofday(&lnm_current_time, NULL);
+	us = (lnm_current_time.tv_sec*1000000+lnm_current_time.tv_usec);
+#elif defined(_WIN32) || defined(__WINDOWS__)
+	// get system time in ticks
+	GetSystemTimeAsFileTime(&lnm_win32_filetime);
+	// load time from two 32-bit words into one 64-bit integer
+	us = lnm_win32_filetime.dwHighDateTime << 32;
+	us |= lnm_win32_filetime.dwLowDateTime;
+	// convert to microseconds
+	us /= 10;
+	// convert from time since Windows NT epoch to time since Unix epoch
+	us -= 11644473600000000ULL;
+#endif
+	return us;
 }
 
-unsigned long lnm_getms(void) {
-	return lnm_getus()/1000;
-}
+
+// item registry utils
 
 
-int lnm_isstatement(lnmItem item) {
-	lnm_log_statement * s = (lnm_log_statement *)item;
-	return !s->type;
-}
-
-
-// Item registry utils
-
+void lnm_free_item(lnmItem item);
 static lnm_pushable * lnm_registered_queues;
 static lnm_pushable * lnm_registered_items;
 static int lnm_registry_update_count;
 
-void lnm_registry_update(void) { // scan each registered item
+
+void lnm_registry_update(void) {
+	// iterate through registry
 	for (uint32_t iter = 0; iter < lnm_registered_items->length; iter++) {
-		lnm_log_statement * s = (lnm_log_statement *)lnm_registered_items->pushed[iter];
-		if (s->boolpushed == 1) { // if the registered item has been pushed elsewhere, remove it from the top level of the registry
+		lnm_log_statement * item = (lnm_log_statement *)(lnm_registered_items->frame[iter]);
+		// if the registered item has been pushed elsewhere, remove it from the top level of the registry
+		if (item->pushed) {
 			lnm_registry_update_count++;
 			lnm_pushable_remove(lnm_registered_items, iter);
 			iter--;
@@ -259,194 +299,278 @@ void lnm_registry_update(void) { // scan each registered item
 }
 
 
-// Core library
+void lnm_registry_free() {
+	for (uint32_t iter = 0; iter < lnm_registered_items->length; iter++) {
+		lnm_free_item(lnm_registered_items->frame[iter]);
+	}
+}
+
+
+// core library utilities
+
+
+int lnm_item_type(lnmItem item) {
+	return ((lnm_log_statement *)item)->type;
+}
 
 void lnm_free_item(lnmItem item) {
-	lnm_log_statement * item_cast = (lnm_log_statement *)item;
-	if (item_cast->boolpushed == 0) { // flush item out of registry
-		item_cast->boolpushed = 1;
-		lnm_registry_update();
-	}
-	if (item_cast->type == 0) {
-		free(item_cast->log);
-		free(item_cast);
-	} else if (item_cast->type == 1) {
-		lnm_log_event * event_cast = (lnm_log_event *)item_cast;
-
+	if (lnm_item_type(item) == LNM_STATEMENT) {
+		lnm_log_statement * statement = (lnm_log_statement *)item;
+		// flush item out of registry
+		if (!statement->pushed) {
+			statement->pushed = 1;
+			lnm_registry_update();
+		}
+		// free item and its contents
+		free(statement->log);
+		free(statement);
+	} else if (lnm_item_type(item) == LNM_EVENT) {
+		// create breadcrumb navigation array with root 'item'
 		lnm_pushable * breadcrumb = lnm_new_pushable();
-		lnm_pushable_push(breadcrumb, (lnmItem)event_cast); // add event_cast as the first step down the breadcrumb
-		while (breadcrumb->length > 0) {                    // while there are items still in the breadcrumb
-			lnm_log_statement * breadcrumb_item = (lnm_log_statement *)breadcrumb->pushed[breadcrumb->length-1]; // fetch the last (deepest) item
-			if (breadcrumb_item->type == 0) { // the item is a statement
-				lnm_pushable_pop(breadcrumb); // remove it from the breadcrumb
-				free(breadcrumb_item->log);   // and free it
-				free(breadcrumb_item);
-			} else if (breadcrumb_item->type == 1) {
-				lnm_log_event * breadcrumb_item_cast = (lnm_log_event *)breadcrumb_item; // item is an event, cast pointer
-				if (breadcrumb_item_cast->pushed->length > 0) {                          // if the event is not empty
-					lnm_pushable_push(breadcrumb, breadcrumb_item_cast->pushed->pushed[breadcrumb_item_cast->pushed->length-1]); // push the last item of event into the breadcrumb
-					lnm_pushable_pop(breadcrumb_item_cast->pushed); // and remove it from this event's index
-					// there is now a new breadcrumb navigation layer. loop back to check the new item...
-				} else {
-					lnm_pushable_pop(breadcrumb); // event is finally empty, remove it from the breadcrumb and free it
-					lnm_pushable_free(breadcrumb_item_cast->pushed);
-					free(breadcrumb_item_cast);
+		lnm_pushable_push(breadcrumb, item);
+		// continually iterate breadcrumb until it's empty
+		while (breadcrumb->length > 0) {
+			// get current item (deepest element of the breadcrumb nav, aka 'z' in 'x > y > z')
+			lnmItem current = breadcrumb->frame[breadcrumb->length - 1];
+			if (lnm_item_type(current) == LNM_STATEMENT) {
+				lnm_log_statement * current_statement = (lnm_log_statement *)current;
+				// flush item out of registry
+				if (!current_statement->pushed) {
+					current_statement->pushed = 1;
+					lnm_registry_update();
 				}
+				// free statement
+				free(current_statement->log);
+				free(current_statement);
+				// pop it from the breadcrumb nav
+				lnm_pushable_pop(breadcrumb);
+				// loop back
+			} else if (lnm_item_type(current) == LNM_EVENT) {
+				lnm_log_event * current_event = (lnm_log_event *)current;
+				// flush item out of registry
+				if (!current_event->pushed) {
+					current_event->pushed = 1;
+					lnm_registry_update();
+				}
+				if (current_event->pushable->length > 0) {
+					// the event has children
+					for (uint32_t iter = 0; iter < current_event->pushable->length; iter++) {
+						// add each child to the breadcrumb nav
+						lnmItem current_event_child = current_event->pushable->frame[iter];
+						lnm_pushable_push(breadcrumb, current_event_child);
+					}
+					// set the current event as having no children so they're not erroneously counted twice
+					current_event->pushable->length = 0;
+				} else {
+					// the event is empty, so we can safely free it and remove it from the breadcrumb nav
+					lnm_pushable_free(current_event->pushable);
+					free(current_event->tag);
+					free(current_event);
+					lnm_pushable_pop(breadcrumb);
+				}
+				// loop back
+			} else {
+				printf("lognestmonster (lnm_free_item): item in log tree has non-statement and non-event type. exiting...\n");
+				abort();
 			}
 		}
 	} else {
-		printf("lognestmonster (lnm_free_item): non-log item passed to function. exiting...\n");
-		exit(1);
+		printf("lognestmonster (lnm_free_item): log tree is non-statement and non-event type. exiting...\n");
+		abort();
 	}
 }
 
-void lnm_free_registry() {
-	for (uint32_t iter = 0; iter < lnm_registered_items->length; iter++) {
-		lnm_free_item(lnm_registered_items->pushed[iter]);
-	}
-}
+
+// queue utilities
+
 
 void lnm_free_queue(lnmQueue queue) {
 	lnm_queue * queue_cast = (lnm_queue *)queue;
-	for (uint32_t iter = 0; iter < queue_cast->pushed->length; iter++) {
-		lnm_free_item(queue_cast->pushed->pushed[iter]);
-		lnm_pushable_remove(queue_cast->pushed, iter--);
+	for (uint32_t iter = 0; iter < queue_cast->pushable->length; iter++) {
+		lnm_free_item(queue_cast->pushable->frame[iter]);
+		lnm_pushable_remove(queue_cast->pushable, iter);
+		iter--;
 	}
 }
 
 
 lnmQueue lnmQueueInit(char * name, char * out_path) {
+	// create queue and item registries if not created
 	if (lnm_registered_queues == NULL) {
 		lnm_registered_queues = lnm_new_pushable();
 	}
 	if (lnm_registered_items == NULL) {
 		lnm_registered_items = lnm_new_pushable();
 	}
-
+	// allocate and populate a new Queue object
 	lnm_queue * new_queue = malloc(sizeof(lnm_queue));
+	if (new_queue == NULL) {
+		printf("lognestmonster (lnmQueueInit): call to malloc() returned NULL. exiting...\n");
+		abort();
+	}
 	new_queue->name = malloc(strlen(name)+1);
 	new_queue->out_path = malloc(strlen(out_path)+1);
+	if (new_queue->name == NULL || new_queue->out_path == NULL) {
+		printf("lognestmonster (lnmQueueInit): call to malloc() returned NULL. exiting...\n");
+		abort();
+	}
 	strcpy(new_queue->name, name);
 	strcpy(new_queue->out_path, out_path);
 	new_queue->timestamp = lnm_getus();
-	new_queue->pushed = lnm_new_pushable();
-
+	new_queue->pushable = lnm_new_pushable();
+	// enter new Queue into registry
 	lnm_pushable_push(lnm_registered_queues, (lnmQueue)new_queue);
 	return (lnmQueue)new_queue;
 }
 
+
 lnmQueue lnmQueueByName(char * name) {
 	if (lnm_registered_queues == NULL) {
 		printf("lognestmonster (lnmQueueByName): queue registry is nonexistant. exiting...\n");
-		exit(1);
+		abort();
 	}
 	if (lnm_registered_queues->length == 0) {
 		printf("lognestmonster (lnmQueueByName): queue registry is empty. exiting...\n");
-		exit(1);
+		abort();
 	}
 	for (uint32_t iter = 0; iter<lnm_registered_queues->length; iter++) {
-		lnm_queue * iterqueue = (lnm_queue *)lnm_registered_queues->pushed[iter];
-		if (strcmp(iterqueue->name, name)==0) {
-			return (lnmQueue)iterqueue;
+		lnm_queue * queue = (lnm_queue *)lnm_registered_queues->frame[iter];
+		if (strcmp(queue->name, name) == 0) {
+			return (lnmQueue)queue;
 		}
 	}
 	printf("lognestmonster (lnmQueueByName): queue not found in registry. exiting...\n");
-	exit(1);
+	abort();
 }
 
+
 void lnmQueuePush(lnmQueue queue, lnmItem item) {
-	if (((lnm_log_statement *)item)->boolpushed == 1) {
+	lnm_log_statement * statement = (lnm_log_statement *)item;
+	if (statement->pushed == 1) {
 		printf("lognestmonster (lnmQueuePush): attempt to push an already-pushed log item. exiting...\n");
-		exit(1);
+		abort();
 	}
-	lnm_pushable_push(((lnm_queue *)queue)->pushed, item);
-	((lnm_log_statement *)item)->boolpushed = 1;
+	// flush out of registry
+	statement->pushed = 1;
 	lnm_registry_update();
+	// add to queue
+	lnm_pushable_push(((lnm_queue *)queue)->pushable, item);
 }
 
 
 lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * tag, char * message) {
 	lnm_log_statement * new_statement = malloc(sizeof(lnm_log_statement));
-	new_statement->type = 0;
+	if (new_statement == NULL) {
+		printf("lognestmonster (lnmStatement): call to malloc() returned NULL. exiting...\n");
+		abort();
+	}
+	new_statement->type = LNM_STATEMENT;
 	new_statement->verbosity = verbosity;
 	new_statement->timestamp = lnm_getus();
-	int tlen = strlen(tag);
-	if (tlen > 256 || tlen < 0) {
-		printf("lognestmonster (lnmStatement): tag length %i is longer than the cap 256 characters. exiting...\n", tlen);
-		exit(1);
+	// enforce string lengths
+	int tag_len = strlen(tag);
+	if (tag_len > 256 || tag_len < 0) {
+		printf("lognestmonster (lnmStatement): tag length %i is longer than the cap 256 characters. exiting...\n", tag_len);
+		abort();
 	}
-	int mlen = strlen(message);
-	if (mlen > 65536 || mlen < 0) {
-		printf("lognestmonster (lnmStatement): message length %i is longer than the cap 65536 characters. exiting...\n", mlen);
-		exit(1);
+	int message_len = strlen(message);
+	if (message_len > 65536 || message_len < 0) {
+		printf("lognestmonster (lnmStatement): message length %i is longer than the cap 65536 characters. exiting...\n", message_len);
+		abort();
 	}
-	new_statement->tag_size = tlen;
-	new_statement->message_size = mlen;
-	new_statement->log = malloc(tlen+mlen+1);
+	new_statement->tag_size = tag_len;
+	new_statement->message_size = message_len;
+	// concat tag + message to new_statement->log
+	new_statement->log = malloc(tag_len + message_len + 1);
+	if (new_statement->log == NULL) {
+		printf("lognestmonster (lnmStatement): call to malloc() returned NULL. exiting...\n");
+		abort();
+	}
 	strcpy(new_statement->log, tag);
 	strcat(new_statement->log, message);
-	lnm_registry_update();
+	// add to registry
 	lnm_pushable_push(lnm_registered_items, (lnmItem)new_statement);
 	return (lnmItem)new_statement;
 }
 
 
-lnmItem lnmEvent(void) {
+lnmItem lnmEvent(char * tag) {
 	lnm_log_event * new_event = malloc(sizeof(lnm_log_event));
-	new_event->type = 1;
-	new_event->pushed = lnm_new_pushable();
-	lnm_registry_update();
+	if (new_event == NULL) {
+		printf("lognestmonster (lnmEvent): call to malloc() returned NULL. exiting...\n");
+		abort();
+	}
+	new_event->type = LNM_EVENT;
+	new_event->pushable = lnm_new_pushable();
+	// copy tag to event
+	int tag_len = strlen(tag);
+	new_event->tag = malloc(tag_len + 1);
+	if (new_event == NULL) {
+		printf("lognestmonster (lnmEvent): call to malloc() returned NULL. exiting...\n");
+		abort();
+	}
+	strcpy(new_event->tag, tag);
+	// add to registry
 	lnm_pushable_push(lnm_registered_items, (lnmItem)new_event);
 	return (lnmItem)new_event;
 }
 
+
 void lnmEventPush(lnmItem event, lnmItem item) {
 	if (event == item) {
 		printf("lognestmonster (lnmEventPush): attempt to push event to self. exiting...\n");
-		exit(1);
+		abort();
 	}
 	lnm_log_statement * item_cast = (lnm_log_statement *)item;
-	if (item_cast->boolpushed == 1) {
+	if (item_cast->pushed == 1) {
 		printf("lognestmonster (lnmEventPush): attempt to push an already-pushed log item. exiting...\n");
-		exit(1);
+		abort();
 	}
-	lnm_log_event * event_t = (lnm_log_event *)event;
-	if (event_t->type != 1) {
+	if (lnm_item_type(event) != LNM_EVENT) {
 		printf("lognestmonster (lnmEventPush): cannot cast non-event to event type. exiting...\n");
-		exit(1);
+		abort();
 	}
-	lnm_pushable_push(event_t->pushed, item);
-	item_cast->boolpushed = 1;
+	lnm_log_event * event_cast = (lnm_log_event *)event;
+	lnm_pushable_push(event_cast->pushable, item);
+	item_cast->pushed = 1;
 	lnm_registry_update();
 }
 
-void lnmEventPushS(lnmItem event, uint8_t verbosity, char * tag, char * message) {
-	lnmItem statement = lnmStatement(verbosity, tag, message);
+
+void lnmEventPushS(lnmItem event, enum lnmVerbosityLevel verbosity, char * statement_tag, char * message) {
+	lnmItem statement = lnmStatement(verbosity, statement_tag, message);
 	lnmEventPush(event, statement);
 }
 
-lnmItem lnmEventI(lnmItem item) {
-	lnmItem event = lnmEvent();
+
+lnmItem lnmEventI(char * event_tag, lnmItem item) {
+	lnmItem event = lnmEvent(event_tag);
 	lnmEventPush(event, item);
 	return event;
 }
 
-lnmItem lnmEventS(uint8_t verbosity, char * tag, char * message) {
-	lnmItem statement = lnmStatement(verbosity, tag, message);
-	return lnmEventI(statement);
+
+lnmItem lnmEventS(char * event_tag, enum lnmVerbosityLevel verbosity, char * statement_tag, char * message) {
+	lnmItem event = lnmEvent(event_tag);
+	lnmEventPushS(event, verbosity, statement_tag, message);
+	return event;
 }
 
 
-void lnm_debug_tabs(int count) {
-	for (int i = 0; i < count; i++) {
+#ifdef LNM_DEBUG
+#include <inttypes.h>
+
+void lnm_debug_tabs(int tab_count) {
+	for (int i = 0; i < tab_count; i++) {
 		printf("  ");
 	}
 }
 
-void lnm_debug_parse_item(lnmItem item, int tabcount) {
-	if (lnm_isstatement(item)) {
+
+void lnm_debug_parse_item(lnmItem item, int tab_count) {
+	if (lnm_item_type(item) == LNM_STATEMENT) {
 		lnm_log_statement * statement = (lnm_log_statement *) item;
-		lnm_debug_tabs(tabcount);
+		lnm_debug_tabs(tab_count);
 
 		char * verbosity;
 		switch (statement->verbosity) {
@@ -479,40 +603,45 @@ void lnm_debug_parse_item(lnmItem item, int tabcount) {
 		message[statement->message_size] = '\0';
 
 		printf("%" PRIu64 " (%s) %s :: %s\n", statement->timestamp, verbosity, tag, message);
-	} else if (!lnm_isstatement(item)) {
+	} else if (lnm_item_type(item) == LNM_EVENT) {
 		lnm_log_event * event = (lnm_log_event *) item;
-		lnm_debug_tabs(tabcount);
-		printf("Event (%" PRIu32 ") [%" PRIu32 "] [\n", event->pushed->length, event->pushed->capacity);
-		for (uint32_t i = 0; i < event->pushed->length; i++) {
-			lnmItem item = event->pushed->pushed[i];
-			lnm_debug_parse_item(item, tabcount + 1);
+		lnm_debug_tabs(tab_count);
+		printf("Event (%" PRIu32 "/%" PRIu32 ") %s [\n", event->pushable->length, event->pushable->capacity, event->tag);
+		for (uint32_t iter = 0; iter < event->pushable->length; iter++) {
+			lnmItem item = event->pushable->frame[iter];
+			lnm_debug_parse_item(item, tab_count + 1);
 		}
-		lnm_debug_tabs(tabcount);
+		lnm_debug_tabs(tab_count);
 		printf("]\n");
 	} else {
 		printf("lognestmonster (lnm_debug_parse_item): unknown item type. exiting...\n");
-		exit(1);
+		abort();
 	}
 }
 
+
 void lnm_debug_parse_registry(void) {
-	printf("Top level registry (%" PRIu32 ") [%" PRIu32 "] [\n", lnm_registered_items->length, lnm_registered_items->capacity);
+	printf("Top level registry (%" PRIu32 "/%" PRIu32 ") [\n", lnm_registered_items->length, lnm_registered_items->capacity);
 	for (uint32_t iter = 0; iter < lnm_registered_items->length; iter++) {
-		lnm_debug_parse_item(lnm_registered_items->pushed[iter], 1);
+		lnm_debug_parse_item(lnm_registered_items->frame[iter], 1);
 	}
 	printf("]\n");
 }
+
 
 void lnm_debug_parse_queue(lnmQueue queue) {
 	lnm_queue * queue_cast = (lnm_queue *)queue;
-	printf("Queue \"%s\" at %s (%" PRIu32 ") [%" PRIu32 "] [\n", queue_cast->name, queue_cast->out_path, queue_cast->pushed->length, queue_cast->pushed->capacity);
-	for (uint32_t iter = 0; iter < queue_cast->pushed->length; iter++) {
-		lnm_debug_parse_item((lnmItem)queue_cast->pushed->pushed[iter], 1);
+	printf("Queue \"%s\" at %s (%" PRIu32 "/%" PRIu32 ") [\n", queue_cast->name, queue_cast->out_path, queue_cast->pushable->length, queue_cast->pushable->capacity);
+	for (uint32_t iter = 0; iter < queue_cast->pushable->length; iter++) {
+		lnm_debug_parse_item((lnmItem)queue_cast->pushable->frame[iter], 1);
 	}
 	printf("]\n");
 }
-#endif // DEFINE_LOGNESTMONSTER
+#endif  // LNM_DEBUG
+#endif  // LNM_INIT
+#endif  // LOGNESTMONSTER_H
 
-#ifdef __cplusplus // Linker protection
+
+#ifdef __cplusplus
 }
 #endif
