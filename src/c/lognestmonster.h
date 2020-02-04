@@ -505,7 +505,7 @@ lnmItem lnmEvent(char * tag) {
 	// copy tag to event
 	int tag_len = strlen(tag);
 	new_event->tag = malloc(tag_len + 1);
-	if (new_event == NULL) {
+	if (new_event->tag == NULL) {
 		printf("lognestmonster (lnmEvent): call to malloc() returned NULL. exiting...\n");
 		abort();
 	}
