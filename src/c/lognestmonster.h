@@ -308,8 +308,8 @@ void lnm_registry_free() {
 
 void lnm_registry_flush_item(lnmItem item) {
 	lnm_log_statement * item_cast = (lnm_log_statement *)item;
-	if (!item->pushed) {
-		item->pushed = 1;
+	if (!item_cast->pushed) {
+		item_cast->pushed = 1;
 		lnm_registry_update();
 	}
 }
