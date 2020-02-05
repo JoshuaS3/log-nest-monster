@@ -306,6 +306,15 @@ void lnm_registry_free() {
 }
 
 
+void lnm_registry_flush_item(lnmItem item) {
+	lnm_log_statement * item_cast = (lnm_log_statement *)item;
+	if (!item->pushed) {
+		item->pushed = 1;
+		lnm_registry_update();
+	}
+}
+
+
 // core library utilities
 
 
@@ -315,12 +324,10 @@ int lnm_item_type(lnmItem item) {
 
 void lnm_free_item(lnmItem item) {
 	if (lnm_item_type(item) == LNM_STATEMENT) {
+		// cast item
 		lnm_log_statement * statement = (lnm_log_statement *)item;
 		// flush item out of registry
-		if (!statement->pushed) {
-			statement->pushed = 1;
-			lnm_registry_update();
-		}
+		lnm_registry_flush_item(item);
 		// free item and its contents
 		free(statement->log);
 		free(statement);
@@ -332,40 +339,35 @@ void lnm_free_item(lnmItem item) {
 		while (breadcrumb->length > 0) {
 			// get current item (deepest element of the breadcrumb nav, aka 'z' in 'x > y > z')
 			lnmItem current = breadcrumb->frame[breadcrumb->length - 1];
+			// flush item out of registry
+			lnm_registry_flush_item(current);
 			if (lnm_item_type(current) == LNM_STATEMENT) {
+				// cast current item
 				lnm_log_statement * current_statement = (lnm_log_statement *)current;
-				// flush item out of registry
-				if (!current_statement->pushed) {
-					current_statement->pushed = 1;
-					lnm_registry_update();
-				}
-				// free statement
+				// free statement and its contents
 				free(current_statement->log);
 				free(current_statement);
 				// pop it from the breadcrumb nav
 				lnm_pushable_pop(breadcrumb);
 				// loop back
 			} else if (lnm_item_type(current) == LNM_EVENT) {
+				// cast current item
 				lnm_log_event * current_event = (lnm_log_event *)current;
-				// flush item out of registry
-				if (!current_event->pushed) {
-					current_event->pushed = 1;
-					lnm_registry_update();
-				}
 				if (current_event->pushable->length > 0) {
 					// the event has children
 					for (uint32_t iter = 0; iter < current_event->pushable->length; iter++) {
-						// add each child to the breadcrumb nav
+						// add every child to the breadcrumb nav to free them
 						lnmItem current_event_child = current_event->pushable->frame[iter];
 						lnm_pushable_push(breadcrumb, current_event_child);
 					}
 					// set the current event as having no children so they're not erroneously counted twice
 					current_event->pushable->length = 0;
 				} else {
-					// the event is empty, so we can safely free it and remove it from the breadcrumb nav
+					// the event is empty, so we can safely free it
 					lnm_pushable_free(current_event->pushable);
 					free(current_event->tag);
 					free(current_event);
+					// and remove from breadcrumb nav
 					lnm_pushable_pop(breadcrumb);
 				}
 				// loop back
