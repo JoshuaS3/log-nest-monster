@@ -12,4 +12,4 @@ jobs:
         steps:
             - uses: actions/checkout@v1
             - name: Run testing chain
-              run: ./test lint c_unit performance
+              run: ./test lint c_unit
