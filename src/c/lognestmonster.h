@@ -51,13 +51,13 @@ typedef uint8_t * lnmQueue;
 lnmQueue lnmQueueInit(char * name, char * out_path);
 lnmQueue lnmQueueByName(char * name);
 
-lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * tag, char * message);
+lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * message);
 
 lnmItem lnmEvent(char * tag);
-lnmItem lnmEventI(char * event_tag, lnmItem item);
-lnmItem lnmEventS(char * event_tag, enum lnmVerbosityLevel verbosity, char * statement_tag, char * message);
+lnmItem lnmEventI(char * tag, lnmItem item);
+lnmItem lnmEventS(char * tag, enum lnmVerbosityLevel verbosity, char * message);
 void lnmEventPush(lnmItem event, lnmItem item);
-void lnmEventPushS(lnmItem event, enum lnmVerbosityLevel verbosity, char * tag, char * message);
+void lnmEventPushS(lnmItem event, enum lnmVerbosityLevel verbosity, char * message);
 
 
 #ifdef LNM_ALL  // expose private utilities
@@ -216,18 +216,16 @@ typedef struct lnm_log_event {
 
 
 typedef struct lnm_log_statement {
-	// word 1, 4 bytes data 4 bytes padding
+	// word 1, 1 byte data 4 bytes padding
 	uint8_t  type:1;       // used internally; 0 = statement, 1 = event
 	uint8_t  pushed:1;     // whether or not this log item has been pushed
 	uint8_t  verbosity:3;  // lnmVerbosityLevel, 0-5
-	uint8_t  tag_size;     // character length of the tag
-	uint16_t message_size; // character length of the message
 
 	// word 2, 8 bytes data
 	uint64_t timestamp;    // 64-bit millisecond timestamp
 
 	// word 3, 8 bytes data
-	char *   log;          // non-null-terminated tag string + non-null-terminated message string
+	char *   log;          // null-terminated message string
 } lnm_log_statement;
 
 
@@ -460,7 +458,7 @@ void lnmQueuePush(lnmQueue queue, lnmItem item) {
 }
 
 
-lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * tag, char * message) {
+lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * message) {
 	lnm_log_statement * new_statement = malloc(sizeof(lnm_log_statement));
 	if (new_statement == NULL) {
 		printf("lognestmonster (lnmStatement): call to malloc() returned NULL. exiting...\n");
@@ -470,26 +468,18 @@ lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * tag, char * messag
 	new_statement->verbosity = verbosity;
 	new_statement->timestamp = lnm_getus();
 	// enforce string lengths
-	int tag_len = strlen(tag);
-	if (tag_len > 256 || tag_len < 0) {
-		printf("lognestmonster (lnmStatement): tag length %i is longer than the cap 256 characters. exiting...\n", tag_len);
-		abort();
-	}
 	int message_len = strlen(message);
 	if (message_len > 65536 || message_len < 0) {
 		printf("lognestmonster (lnmStatement): message length %i is longer than the cap 65536 characters. exiting...\n", message_len);
 		abort();
 	}
-	new_statement->tag_size = tag_len;
-	new_statement->message_size = message_len;
-	// concat tag + message to new_statement->log
-	new_statement->log = malloc(tag_len + message_len + 1);
+	// copy message to new_statement->log
+	new_statement->log = malloc(message_len);
 	if (new_statement->log == NULL) {
 		printf("lognestmonster (lnmStatement): call to malloc() returned NULL. exiting...\n");
 		abort();
 	}
-	strcpy(new_statement->log, tag);
-	strcat(new_statement->log, message);
+	strcpy(new_statement->log, message);
 	// add to registry
 	lnm_pushable_push(lnm_registered_items, (lnmItem)new_statement);
 	return (lnmItem)new_statement;
@@ -539,22 +529,22 @@ void lnmEventPush(lnmItem event, lnmItem item) {
 }
 
 
-void lnmEventPushS(lnmItem event, enum lnmVerbosityLevel verbosity, char * statement_tag, char * message) {
-	lnmItem statement = lnmStatement(verbosity, statement_tag, message);
+void lnmEventPushS(lnmItem event, enum lnmVerbosityLevel verbosity, char * message) {
+	lnmItem statement = lnmStatement(verbosity, message);
 	lnmEventPush(event, statement);
 }
 
 
-lnmItem lnmEventI(char * event_tag, lnmItem item) {
-	lnmItem event = lnmEvent(event_tag);
+lnmItem lnmEventI(char * tag, lnmItem item) {
+	lnmItem event = lnmEvent(tag);
 	lnmEventPush(event, item);
 	return event;
 }
 
 
-lnmItem lnmEventS(char * event_tag, enum lnmVerbosityLevel verbosity, char * statement_tag, char * message) {
-	lnmItem event = lnmEvent(event_tag);
-	lnmEventPushS(event, verbosity, statement_tag, message);
+lnmItem lnmEventS(char * tag, enum lnmVerbosityLevel verbosity, char * message) {
+	lnmItem event = lnmEvent(tag);
+	lnmEventPushS(event, verbosity, message);
 	return event;
 }
 
@@ -596,15 +586,7 @@ void lnm_debug_parse_item(lnmItem item, int tab_count) {
 				break;
 		}
 
-		char tag[statement->tag_size+1];
-		strncpy(tag, statement->log, statement->tag_size);
-		tag[statement->tag_size] = '\0';
-
-		char message[statement->message_size+1];
-		strncpy(message, statement->log+statement->tag_size, statement->message_size);
-		message[statement->message_size] = '\0';
-
-		printf("%" PRIu64 " (%s) %s :: %s\n", statement->timestamp, verbosity, tag, message);
+		printf("%" PRIu64 " (%s) :: %s\n", statement->timestamp, verbosity, statement->log);
 	} else if (lnm_item_type(item) == LNM_EVENT) {
 		lnm_log_event * event = (lnm_log_event *) item;
 		lnm_debug_tabs(tab_count);
