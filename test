@@ -53,6 +53,19 @@ c_unit() {
 	success "Finished"
 }
 
+parser() {
+	warn "Compiling parser"
+	echo
+
+	warn_lite "Running compiler"
+	mkdir -p bin
+	FILES=$(find src/parser/*.c)
+	handle "gcc -pedantic -Wall -Wextra -Werror -o bin/parser -I src/c $FILES -lncurses"
+	echo
+
+	success "Finished"
+}
+
 lint() {
 	warn "Running lint test"
 	echo
