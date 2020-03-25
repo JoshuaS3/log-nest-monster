@@ -43,7 +43,7 @@ c_unit() {
 	# Compile C unit tests
 	warn_lite "Making C header unit test"
 	mkdir -p bin
-	handle "gcc -pedantic -Wall -Wextra -Werror -o bin/c -I src/c tests/header_unit.c tests/header_unit_2.c"
+	handle "gcc -std=c11 -pedantic -Wall -Wextra -Werror -o bin/c -I src/c tests/header_unit.c tests/header_unit_2.c"
 	echo
 
 	warn_lite "Running C header unit test"
@@ -60,7 +60,7 @@ parser() {
 	warn_lite "Running compiler"
 	mkdir -p bin
 	FILES=$(find src/parser/*.c)
-	handle "gcc -pedantic -Wall -Wextra -Werror -o bin/parser -I src/c $FILES -lncurses"
+	handle "gcc -std=c11 -pedantic -Wall -Wextra -Werror -o bin/parser -I src/c $FILES -lncurses"
 	echo
 
 	success "Finished"
@@ -73,7 +73,7 @@ lint() {
 	find . -name "*.c" -print0 | while read -d $'\0' file
 	do
 		warn_lite "Executing gcc --syntax-only $file"
-		handle "gcc --syntax-only -pedantic -Wall -Wextra -Werror -I src/c $file"
+		handle "gcc -std=c11 --syntax-only -pedantic -Wall -Wextra -Werror -I src/c $file"
 		echo
 	done
 
@@ -96,7 +96,7 @@ memory() {
 	echo
 
 	warn_lite "Compiling"
-	handle "gcc -pedantic -Wall -Wextra -Werror -o bin/c-memory -I src/c tests/header_memory.c"
+	handle "gcc -std=c11 -pedantic -Wall -Wextra -Werror -o bin/c-memory -I src/c tests/header_memory.c"
 	echo
 
 	warn_lite "Running"

@@ -16,7 +16,7 @@ HEADER_ONLY = os.path.join(PROJECT_PATH, "tests/header_only.c")
 HEADER_PERFORMANCE = os.path.join(PROJECT_PATH, "tests/header_memory.c")
 
 CC = "gcc"
-CFLAGS = ["-pedantic", "-Wall", "-Wextra", "-Werror"]
+CFLAGS = ["-std=c11", "-pedantic", "-Wall", "-Wextra", "-Werror"]
 COUTFLAG = "-o"
 COPTIMIZATIONS = ["-O0", "-O1", "-O2", "-O3", "-Os"]
 CINCLUDES = ["-I", INCLUDE_PATH]
