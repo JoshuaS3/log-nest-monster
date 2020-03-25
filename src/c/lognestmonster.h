@@ -111,6 +111,12 @@ static const uint8_t LNM_STATEMENT = 0;
 static const uint8_t LNM_EVENT = 1;
 
 
+_Noreturn void lnm_abort(char * function_traceback, char * message) {
+	printf("lognestmonster (%s): %s. aborting...\n", function_traceback, message);
+	abort();
+}
+
+
 // lnm_pushable utilities
 
 
@@ -124,13 +130,11 @@ typedef struct lnm_pushable {
 void lnm_pushable_realloc(lnm_pushable * pushable) {
 	if (pushable->length > pushable->capacity) {
 		if (pushable->capacity > UINT32_MAX / 2) {
-			printf("lognestmonster (lnm_pushable_realloc): pushable reached max capacity of 2^32-1. exiting...\n");
-			abort();
+			lnm_abort("lnm_pushable_realloc", "pushable can't surpass max capacity of 2^16");
 		}
 		pushable->frame = realloc(pushable->frame, sizeof(lnmItem) * (pushable->capacity *= 2));
 		if (pushable->frame == NULL) {
-			printf("lognestmonster (lnm_pushable_realloc): call to realloc() returned NULL. exiting...\n");
-			abort();
+			lnm_abort("lnm_pushable_realloc", "call to realloc() returned NULL");
 		}
 	} else if (pushable->length < (pushable->capacity / 2)) {
 		while (pushable->length < (pushable->capacity / 2) && pushable->capacity > 8) {
@@ -138,8 +142,7 @@ void lnm_pushable_realloc(lnm_pushable * pushable) {
 		}
 		pushable->frame = realloc(pushable->frame, sizeof(lnmItem) * (pushable->capacity));
 		if (pushable->frame == NULL) {
-			printf("lognestmonster (lnm_pushable_realloc): call to realloc() returned NULL. exiting...\n");
-			abort();
+			lnm_abort("lnm_pushable_realloc", "call to realloc() returned NULL");
 		}
 	}
 }
@@ -148,15 +151,13 @@ void lnm_pushable_realloc(lnm_pushable * pushable) {
 lnm_pushable * lnm_new_pushable(void) {
 	lnm_pushable * new_pushable = calloc(1, sizeof(lnm_pushable));
 	if (new_pushable == NULL) {
-		printf("lognestmonster (lnm_new_pushable): call to calloc() returned NULL. exiting...\n");
-		abort();
+		lnm_abort("lnm_new_pushable", "call to calloc() returned NULL");
 	}
 	new_pushable->capacity = 8;
 	new_pushable->length = 0;
 	new_pushable->frame = calloc(8, sizeof(lnmItem));
 	if (new_pushable->frame == NULL) {
-		printf("lognestmonster (lnm_new_pushable): call to calloc() returned NULL. exiting...\n");
-		abort();
+		lnm_abort("lnm_new_pushable", "call to calloc() returned NULL");
 	}
 	return new_pushable;
 }
@@ -177,8 +178,7 @@ void lnm_pushable_pop(lnm_pushable * pushable) {
 
 void lnm_pushable_remove(lnm_pushable * pushable, uint32_t index) {
 	if (index >= pushable->length) {
-		printf("lognestmonster (lnm_pushable_remove): attempt to remove index out of pushable bounds. exiting...\n");
-		abort();
+		lnm_abort("lnm_pushable_remove", "attempt to remove index out of pushable bounds");
 	}
 	if (index == pushable->length - 1) {
 		lnm_pushable_pop(pushable);
@@ -250,7 +250,7 @@ static struct timeval lnm_current_time;
 #include <sysinfoapi.h>
 static FILETIME lnm_win32_filetime;
 #else
-#error lognestmonster: Windows NT or a POSIX-compliant system were not detected. Implement your own system time functions or compile on a compliant system.
+#error lognestmonster: Neither Windows NT nor a POSIX-compliant system were detected. Implement your own system time functions or compile on a compliant system.
 #endif
 
 
@@ -268,7 +268,7 @@ uint64_t lnm_getus(void) {
 	// convert to microseconds
 	us /= 10;
 	// convert from time since Windows NT epoch to time since Unix epoch
-	us -= 11644473600000000ULL;
+	us -= 116444736000000000ULL;
 #endif
 	return us;
 }
@@ -306,9 +306,8 @@ void lnm_registry_push(lnmItem item) {
 void lnm_registry_free() {
 	lnm_registry_update();
 	for (uint32_t iter = 0; iter < lnm_registered_items->length;) {
-		lnm_free_item(lnm_registered_items->frame[iter]);
+		lnm_free_item(lnm_registered_items->frame[lnm_registered_items->length-1]);
 	}
-	lnm_registered_items->length = 0;
 	lnm_pushable_realloc(lnm_registered_items);
 }
 
@@ -373,14 +372,12 @@ void lnm_free_item(lnmItem item) {
 				free(current_event);
 				continue;
 			} else {
-				printf("lognestmonster (lnm_free_item): item in log tree has non-statement and non-event type. exiting...\n");
-				abort();
+				lnm_abort("lnm_free_item", "item in log tree has non-statement and non-event type");
 			}
 		}
 		lnm_pushable_free(breadcrumb);
 	} else {
-		printf("lognestmonster (lnm_free_item): log tree is non-statement and non-event type. exiting...\n");
-		abort();
+		lnm_abort("lnm_free_item", "log tree is non-statement and non-event type");
 	}
 }
 
@@ -409,14 +406,12 @@ lnmQueue lnmQueueInit(char * name, char * out_path) {
 	// allocate and populate a new Queue object
 	lnm_queue * new_queue = calloc(1, sizeof(lnm_queue));
 	if (new_queue == NULL) {
-		printf("lognestmonster (lnmQueueInit): call to calloc() returned NULL. exiting...\n");
-		abort();
+		lnm_abort("lnmQueueInit", "call to calloc() returned NULL");
 	}
 	new_queue->name = malloc(strlen(name)+1);
 	new_queue->out_path = malloc(strlen(out_path)+1);
 	if (new_queue->name == NULL || new_queue->out_path == NULL) {
-		printf("lognestmonster (lnmQueueInit): call to malloc() returned NULL. exiting...\n");
-		abort();
+		lnm_abort("lnmQueueInit", "call to malloc() returned NULL");
 	}
 	strcpy(new_queue->name, name);
 	strcpy(new_queue->out_path, out_path);
@@ -430,12 +425,10 @@ lnmQueue lnmQueueInit(char * name, char * out_path) {
 
 lnmQueue lnmQueueByName(char * name) {
 	if (lnm_registered_queues == NULL) {
-		printf("lognestmonster (lnmQueueByName): queue registry is nonexistent. exiting...\n");
-		abort();
+		lnm_abort("lnmQueueByName", "queue registry is nonexistent");
 	}
 	if (lnm_registered_queues->length == 0) {
-		printf("lognestmonster (lnmQueueByName): queue registry is empty. exiting...\n");
-		abort();
+		lnm_abort("lnmQueueByName", "queue registry is empty");
 	}
 	for (uint32_t iter = 0; iter < lnm_registered_queues->length; iter++) {
 		lnm_queue * queue = (lnm_queue *)lnm_registered_queues->frame[iter];
@@ -443,20 +436,17 @@ lnmQueue lnmQueueByName(char * name) {
 			return (lnmQueue)queue;
 		}
 	}
-	printf("lognestmonster (lnmQueueByName): queue not found in registry. exiting...\n");
-	abort();
+	lnm_abort("lnmQueueByName", "queue not found in registry");
 }
 
 
 void lnmQueuePush(lnmQueue queue, lnmItem item) {
 	if (queue == NULL || item == NULL) {
-		printf("lognestmonster (lnmQueuePush): cannot perform operation on NULL arguments. exiting...\n");
-		abort();
+		lnm_abort("lnmQueuePush", "cannot perform operation on NULL arguments");
 	}
 	lnm_log_statement * statement = (lnm_log_statement *)item;
 	if (statement->pushed == 1) {
-		printf("lognestmonster (lnmQueuePush): attempt to push an already-pushed log item. exiting...\n");
-		abort();
+		lnm_abort("lnmQueuePush", "attempt to push an already-pushed log item");
 	}
 	// flush out of registry
 	lnm_registry_flush_item(item);
@@ -467,13 +457,11 @@ void lnmQueuePush(lnmQueue queue, lnmItem item) {
 
 lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * message) {
 	if (message == NULL) {
-		printf("lognestmonster (lnmStatement): cannot perform operation on NULL argument. exiting...\n");
-		abort();
+		lnm_abort("lnmStatement", "cannot perform operation on NULL argument");
 	}
 	lnm_log_statement * new_statement = calloc(1, sizeof(lnm_log_statement));
 	if (new_statement == NULL) {
-		printf("lognestmonster (lnmStatement): call to calloc() returned NULL. exiting...\n");
-		abort();
+		lnm_abort("lnmStatement", "call to calloc() returned NULL");
 	}
 	new_statement->type = LNM_STATEMENT;
 	new_statement->pushed = 0;
@@ -484,8 +472,7 @@ lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * message) {
 	// copy message to new_statement->log
 	new_statement->log = malloc(message_len);
 	if (new_statement->log == NULL) {
-		printf("lognestmonster (lnmStatement): call to malloc() returned NULL. exiting...\n");
-		abort();
+		lnm_abort("lnmStatement", "call to malloc() returned NULL");
 	}
 	strcpy(new_statement->log, message);
 	// add to registry
@@ -496,13 +483,11 @@ lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * message) {
 
 lnmItem lnmEvent(char * tag) {
 	if (tag == NULL) {
-		printf("lognestmonster (lnmEvent): cannot perform operation on NULL argument. exiting...\n");
-		abort();
+		lnm_abort("lnmEvent", "cannot perform operation on NULL argument");
 	}
 	lnm_log_event * new_event = calloc(1, sizeof(lnm_log_event));
 	if (new_event == NULL) {
-		printf("lognestmonster (lnmEvent): call to calloc() returned NULL. exiting...\n");
-		abort();
+		lnm_abort("lnmEvent", "call to calloc() returned NULL");
 	}
 	new_event->type = LNM_EVENT;
 	new_event->pushed = 0;
@@ -511,8 +496,7 @@ lnmItem lnmEvent(char * tag) {
 	int tag_len = strlen(tag) + 1;
 	new_event->tag = malloc(tag_len);
 	if (new_event->tag == NULL) {
-		printf("lognestmonster (lnmEvent): call to malloc() returned NULL. exiting...\n");
-		abort();
+		lnm_abort("lnmEvent", "call to malloc() returned NULL");
 	}
 	strcpy(new_event->tag, tag);
 	// add to registry
@@ -523,21 +507,17 @@ lnmItem lnmEvent(char * tag) {
 
 void lnmEventPush(lnmItem event, lnmItem item) {
 	if (event == NULL || item == NULL) {
-		printf("lognestmonster (lnmEventPush): cannot perform operation on NULL arguments. exiting...\n");
-		abort();
+		lnm_abort("lnmEventPush", "cannot perform operation on NULL arguments");
 	}
 	if (event == item) {
-		printf("lognestmonster (lnmEventPush): attempt to push event to self. exiting...\n");
-		abort();
+		lnm_abort("lnmEventPush", "attempt to push event to self");
 	}
 	lnm_log_statement * item_cast = (lnm_log_statement *)item;
 	if (item_cast->pushed == 1) {
-		printf("lognestmonster (lnmEventPush): attempt to push an already-pushed log item. exiting...\n");
-		abort();
+		lnm_abort("lnmEventPush", "attempt to push an already-pushed log item");
 	}
 	if (lnm_item_type(event) != LNM_EVENT) {
-		printf("lognestmonster (lnmEventPush): cannot cast non-event to event type. exiting...\n");
-		abort();
+		lnm_abort("lnmEventPush", "cannot cast non-event to event type");
 	}
 	lnm_log_event * event_cast = (lnm_log_event *)event;
 	lnm_pushable_push(event_cast->pushable, item);
@@ -614,8 +594,7 @@ void lnm_debug_parse_item(lnmItem item, int tab_count) {
 		lnm_debug_tabs(tab_count);
 		printf("]\n");
 	} else {
-		printf("lognestmonster (lnm_debug_parse_item): unknown item type. exiting...\n");
-		abort();
+		lnm_abort("lnm_debug_parse_item", "unknown item type");
 	}
 }
 
