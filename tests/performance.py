@@ -13,8 +13,7 @@ PROJECT_PATH = os.path.abspath(
 BIN_PATH = os.path.join(PROJECT_PATH, "bin")
 INCLUDE_PATH = os.path.join(PROJECT_PATH, "src/c")
 HEADER_ONLY = os.path.join(PROJECT_PATH, "tests/header_only.c")
-HEADER_MAIN = os.path.join(PROJECT_PATH, "tests/header_unit.c")
-HEADER_MAIN_2 = os.path.join(PROJECT_PATH, "tests/header_unit_2.c")
+HEADER_PERFORMANCE = os.path.join(PROJECT_PATH, "tests/header_memory.c")
 
 CC = "gcc"
 CFLAGS = ["-pedantic", "-Wall", "-Wextra", "-Werror"]
@@ -24,7 +23,7 @@ CINCLUDES = ["-I", INCLUDE_PATH]
 
 TABLE_HEADER_1 = "Optimization Level"
 TABLE_HEADER_2 = "Header Binary Size (in bytes)"
-TABLE_HEADER_3 = "Unit Test Runtime (in µs)"
+TABLE_HEADER_3 = "Memory Test Runtime (in µs)"
 
 RE_TRIAL_TIME = r"time elapsed \(us\): (\d*)"
 
@@ -68,7 +67,7 @@ if __name__ == "__main__":
         if not gcc_compile(header_only_out, [HEADER_ONLY], optimization):
             sys.exit()
         header_unit_out = os.path.join(BIN_PATH, f"c{optimization}")
-        if not gcc_compile(header_unit_out, [HEADER_MAIN, HEADER_MAIN_2], optimization):
+        if not gcc_compile(header_unit_out, [HEADER_PERFORMANCE], optimization):
             sys.exit()
     print("getting results")
     EXECUTABLE_SIZES = {}
@@ -78,7 +77,7 @@ if __name__ == "__main__":
         header_unit_out = os.path.join(BIN_PATH, f"c{optimization}")
         EXECUTABLE_SIZES[optimization] = get_size(header_only_out)
         trial_runtimes = []
-        for trial_num in range(200):
+        for trial_num in range(100):
             trial_output = execute_file(header_unit_out)
             trial_time = re.search(RE_TRIAL_TIME, trial_output).group(1)
             trial_runtimes.append(int(trial_time))

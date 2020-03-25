@@ -33,7 +33,7 @@ handle() {
 }
 
 help() {
-	echo "Usage: ./test [help] [c_unit] [performance] [lint]"
+	echo "Usage: ./test [help] [c_unit] [parser] [lint] [performance] [memory]"
 }
 
 c_unit() {
@@ -86,6 +86,21 @@ performance() {
 
 	warn_lite "Compiling and getting file sizes"
 	handle tests/performance.py
+	echo
+
+	success "Finished"
+}
+
+memory() {
+	warn "Running memory leak test"
+	echo
+
+	warn_lite "Compiling"
+	handle "gcc -pedantic -Wall -Wextra -Werror -o bin/c-memory -I src/c tests/header_memory.c"
+	echo
+
+	warn_lite "Running"
+	handle bin/c-memory
 	echo
 
 	success "Finished"
