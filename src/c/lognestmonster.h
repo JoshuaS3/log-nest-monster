@@ -108,8 +108,10 @@ void lnm_debug_parse_queue(lnmQueue queue);
 #include <string.h>
 
 
-static const uint8_t LNM_STATEMENT = 0;
-static const uint8_t LNM_EVENT = 1;
+enum LNM_ITEM_TYPE {
+	LNM_STATEMENT = 0,
+	LNM_EVENT = 1,
+};
 
 
 _Noreturn void lnm_abort(const char * function_traceback, const char * message) {
