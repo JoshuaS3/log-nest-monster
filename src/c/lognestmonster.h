@@ -246,33 +246,35 @@ typedef struct lnm_queue {
 
 #if defined(__unix__) || defined(unix) || defined(__unix) || defined(__CYGWIN__)
 #include <sys/time.h>
-static struct timeval lnm_current_time;
-#elif defined(_WIN32) || defined(__WINDOWS__)
-#include <sysinfoapi.h>
-static FILETIME lnm_win32_filetime;
-#else
-#error lognestmonster: Neither Windows NT nor a POSIX-compliant system were detected. Implement your own system time functions or compile on a compliant system.
-#endif
-
-
 uint64_t lnm_getus(void) {
 	uint64_t us;
-#if defined(__unix__) || defined(unix) || defined(__unix) || defined(__CYGWIN__)
+	struct timeval lnm_current_time;
 	gettimeofday(&lnm_current_time, NULL);
 	us = (lnm_current_time.tv_sec*1000000+lnm_current_time.tv_usec);
+	return us;
+}
 #elif defined(_WIN32) || defined(__WINDOWS__)
+#include <windows.h>
+#include <sysinfoapi.h>
+uint64_t lnm_getus(void) {
+	uint64_t us;
 	// get system time in ticks
+	FILETIME lnm_win32_filetime;
 	GetSystemTimeAsFileTime(&lnm_win32_filetime);
 	// load time from two 32-bit words into one 64-bit integer
-	us = lnm_win32_filetime.dwHighDateTime << 32;
+	us = lnm_win32_filetime.dwHighDateTime;
+	us = us << 32;
 	us |= lnm_win32_filetime.dwLowDateTime;
 	// convert to microseconds
 	us /= 10;
 	// convert from time since Windows NT epoch to time since Unix epoch
-	us -= 116444736000000000ULL;
-#endif
+	us -= 11644473600000000ULL;
 	return us;
 }
+#else
+#error lognestmonster: Neither Windows NT nor a POSIX-compliant system were detected.\
+		Implement your own system time functions or compile on a compliant system.
+#endif
 
 
 // item registry utils
