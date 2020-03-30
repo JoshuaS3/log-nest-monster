@@ -31,13 +31,13 @@
 // C header file for implementation of the lognestmonster logging library
 
 
+#ifndef LOGNESTMONSTER_H
+#define LOGNESTMONSTER_H 1
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-#ifndef LOGNESTMONSTER_H
-#define LOGNESTMONSTER_H 1
 
 
 #include <stdint.h>  // necessary include for type declaration
@@ -623,9 +623,11 @@ void lnm_debug_parse_queue(lnmQueue queue) {
 }
 #endif  // LNM_DEBUG
 #endif  // LNM_INIT
-#endif  // LOGNESTMONSTER_H
 
 
 #ifdef __cplusplus
 }
 #endif
+
+
+#endif  // LOGNESTMONSTER_H
