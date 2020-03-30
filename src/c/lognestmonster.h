@@ -48,16 +48,16 @@ typedef uint8_t * lnmItem;
 typedef uint8_t * lnmQueue;
 
 
-lnmQueue lnmQueueInit(char * name, char * out_path);
-lnmQueue lnmQueueByName(char * name);
+lnmQueue lnmQueueInit(const char * name, const char * out_path);
+lnmQueue lnmQueueByName(const char * name);
 
-lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * message);
+lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, const char * message);
 
-lnmItem lnmEvent(char * tag);
-lnmItem lnmEventI(char * tag, lnmItem item);
-lnmItem lnmEventS(char * tag, enum lnmVerbosityLevel verbosity, char * message);
+lnmItem lnmEvent(const char * tag);
+lnmItem lnmEventI(const char * tag, lnmItem item);
+lnmItem lnmEventS(const char * tag, enum lnmVerbosityLevel verbosity, const char * message);
 void lnmEventPush(lnmItem event, lnmItem item);
-void lnmEventPushS(lnmItem event, enum lnmVerbosityLevel verbosity, char * message);
+void lnmEventPushS(lnmItem event, enum lnmVerbosityLevel verbosity, const char * message);
 
 
 #ifdef LNM_ALL  // expose private utilities
@@ -77,6 +77,7 @@ void lnm_pushable_remove(lnm_pushable * pushable, uint32_t index);
 void lnm_pushable_free(lnm_pushable * pushable);
 
 // misc utilities
+_Noreturn void lnm_abort(const char * function_traceback, const char * message);
 unsigned long lnm_getus(void);
 
 // registry utilities
@@ -111,7 +112,7 @@ static const uint8_t LNM_STATEMENT = 0;
 static const uint8_t LNM_EVENT = 1;
 
 
-_Noreturn void lnm_abort(char * function_traceback, char * message) {
+_Noreturn void lnm_abort(const char * function_traceback, const char * message) {
 	printf("lognestmonster (%s): %s. aborting...\n", function_traceback, message);
 	abort();
 }
@@ -395,7 +396,7 @@ void lnm_free_queue(lnmQueue queue) {
 }
 
 
-lnmQueue lnmQueueInit(char * name, char * out_path) {
+lnmQueue lnmQueueInit(const char * name, const char * out_path) {
 	// create queue and item registries if not created
 	if (lnm_registered_queues == NULL) {
 		lnm_registered_queues = lnm_new_pushable();
@@ -423,7 +424,7 @@ lnmQueue lnmQueueInit(char * name, char * out_path) {
 }
 
 
-lnmQueue lnmQueueByName(char * name) {
+lnmQueue lnmQueueByName(const char * name) {
 	if (lnm_registered_queues == NULL) {
 		lnm_abort("lnmQueueByName", "queue registry is nonexistent");
 	}
@@ -455,7 +456,7 @@ void lnmQueuePush(lnmQueue queue, lnmItem item) {
 }
 
 
-lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * message) {
+lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, const char * message) {
 	if (message == NULL) {
 		lnm_abort("lnmStatement", "cannot perform operation on NULL argument");
 	}
@@ -481,7 +482,7 @@ lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, char * message) {
 }
 
 
-lnmItem lnmEvent(char * tag) {
+lnmItem lnmEvent(const char * tag) {
 	if (tag == NULL) {
 		lnm_abort("lnmEvent", "cannot perform operation on NULL argument");
 	}
@@ -525,20 +526,20 @@ void lnmEventPush(lnmItem event, lnmItem item) {
 }
 
 
-void lnmEventPushS(lnmItem event, enum lnmVerbosityLevel verbosity, char * message) {
+void lnmEventPushS(lnmItem event, enum lnmVerbosityLevel verbosity, const char * message) {
 	lnmItem statement = lnmStatement(verbosity, message);
 	lnmEventPush(event, statement);
 }
 
 
-lnmItem lnmEventI(char * tag, lnmItem item) {
+lnmItem lnmEventI(const char * tag, lnmItem item) {
 	lnmItem event = lnmEvent(tag);
 	lnmEventPush(event, item);
 	return event;
 }
 
 
-lnmItem lnmEventS(char * tag, enum lnmVerbosityLevel verbosity, char * message) {
+lnmItem lnmEventS(const char * tag, enum lnmVerbosityLevel verbosity, const char * message) {
 	lnmItem event = lnmEvent(tag);
 	lnmEventPushS(event, verbosity, message);
 	return event;
