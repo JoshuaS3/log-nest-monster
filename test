@@ -33,7 +33,7 @@ handle() {
 }
 
 help() {
-	echo "Usage: ./test [help] [c_unit] [parser] [lint] [performance] [memory]"
+	echo "Usage: ./test [help] [c_unit] [parser] [lint] [performance] [memory] [clean]"
 }
 
 c_unit() {
@@ -84,7 +84,7 @@ performance() {
 	warn "Running performance test"
 	echo
 
-	warn_lite "Compiling and getting file sizes"
+	warn_lite "Compiling and running performance tests"
 	handle tests/performance.py
 	echo
 
@@ -104,6 +104,12 @@ memory() {
 	echo
 
 	success "Finished"
+}
+
+clean() {
+	warn "Cleaning"
+	echo
+	rm -r bin/
 }
 
 for test in "$@"

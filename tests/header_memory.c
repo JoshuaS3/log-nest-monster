@@ -13,7 +13,6 @@
 // Test memory usage on lognestmonster library to prevent leaks
 
 #include <stdio.h>
-#include <sys/resource.h>
 
 #define LNM_INIT
 #define LNM_ALL
@@ -23,12 +22,8 @@
 int main() {
 	long t1 = lnm_getus();
 
-	struct rusage r_usage;
-	getrusage(RUSAGE_SELF, &r_usage);
-	printf("Memory usage before: %li\n", r_usage.ru_maxrss);
-
 	lnmItem lastEvent = NULL;
-	for (int iter = 0; iter < 1000; iter++) {
+	for (int iter = 0; iter < 25000; iter++) {
 		uint64_t time = lnm_getus();
 		int type = time % 5 == 0 ? LNM_EVENT : LNM_STATEMENT;
 		if (type == LNM_STATEMENT) {
@@ -51,18 +46,7 @@ int main() {
 			}
 		}
 	}
-
-	lnm_debug_parse_registry();
-
-	getrusage(RUSAGE_SELF, &r_usage);
-	printf("Memory usage during test: %li\n", r_usage.ru_maxrss);
-
 	lnm_registry_free();
-	lnm_debug_parse_registry();
-
-	getrusage(RUSAGE_SELF, &r_usage);
-	printf("Memory usage after: %li\n", r_usage.ru_maxrss);
-
 	printf("time elapsed (us): %lu\n", lnm_getus() - t1);
 	return 0;
 }

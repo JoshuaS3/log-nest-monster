@@ -26,6 +26,7 @@ TABLE_HEADER_2 = "Header Binary Size (in bytes)"
 TABLE_HEADER_3 = "Memory Test Runtime (in µs)"
 
 RE_TRIAL_TIME = r"time elapsed \(us\): (\d*)"
+TRIAL_PASSES = 100
 
 
 def gcc_compile(out_file: str, in_files: list, optimization_level: str = "-O0"):
@@ -40,8 +41,10 @@ def gcc_compile(out_file: str, in_files: list, optimization_level: str = "-O0"):
     )
     process = subprocess.run(process_command, stdout=sys.stdout, stderr=sys.stderr)
     if process.returncode:
-        print("gcc_compile: error in compilation")
+        print("[gcc_compile] error in compilation")
         return 0
+    else:
+        print(f"[gcc_compile] finished compiling to {out_file}")
     return 1
 
 
@@ -61,29 +64,43 @@ if __name__ == "__main__":
         os.mkdir(BIN_PATH)
     except FileExistsError:
         pass
-    print("running compiler")
+    else:
+        print("[main] created bin/")
+    print("[main] compiling...")
     for optimization in COPTIMIZATIONS:
-        header_only_out = os.path.join(BIN_PATH, f"header_only{optimization}")
+        header_only_out = os.path.join(BIN_PATH, f"c-header-only{optimization}")
         if not gcc_compile(header_only_out, [HEADER_ONLY], optimization):
             sys.exit()
-        header_unit_out = os.path.join(BIN_PATH, f"c{optimization}")
+        header_unit_out = os.path.join(BIN_PATH, f"c-performance{optimization}")
         if not gcc_compile(header_unit_out, [HEADER_PERFORMANCE], optimization):
             sys.exit()
-    print("getting results")
+    print("[main] getting filesize data of header_only binaries")
     EXECUTABLE_SIZES = {}
-    EXECUTABLE_RUNTIMES = {}
     for optimization in COPTIMIZATIONS:
-        header_only_out = os.path.join(BIN_PATH, f"header_only{optimization}")
-        header_unit_out = os.path.join(BIN_PATH, f"c{optimization}")
+        header_only_out = os.path.join(BIN_PATH, f"c-header-only{optimization}")
         EXECUTABLE_SIZES[optimization] = get_size(header_only_out)
+    print("[main] beginning time trials")
+    EXECUTABLE_RUNTIMES = {}
+    import matplotlib.pyplot as plt
+    plt.xlabel("trial")
+    plt.ylabel("time (µs)")
+    for optimization in COPTIMIZATIONS:
+        print(f"[main/trials] running trial on {optimization}")
+        header_unit_out = os.path.join(BIN_PATH, f"c-performance{optimization}")
         trial_runtimes = []
-        for trial_num in range(100):
+        for trial_num in range(TRIAL_PASSES):
             trial_output = execute_file(header_unit_out)
             trial_time = re.search(RE_TRIAL_TIME, trial_output).group(1)
             trial_runtimes.append(int(trial_time))
-        EXECUTABLE_RUNTIMES[optimization] = int(median(trial_runtimes))
-    print("done. printing...")
-    print()
+        plt.plot(trial_runtimes)
+        trial_runtimes.sort()
+        trial_median = int(median(trial_runtimes))
+        trial_mid = int(TRIAL_PASSES/2)
+        trial_iqr = int(median(trial_runtimes[trial_mid:TRIAL_PASSES]) - median(trial_runtimes[0:trial_mid]))
+        trial_moe = int(trial_iqr/2)
+        EXECUTABLE_RUNTIMES[optimization] = f"{trial_median} ± {trial_moe}"
+    plt.legend(COPTIMIZATIONS)
+    print("[main] finished trials:")
     print(f"{TABLE_HEADER_1} | {TABLE_HEADER_2} | {TABLE_HEADER_3}")
     print(
         f"{len(TABLE_HEADER_1)*'-'} | {len(TABLE_HEADER_2)*'-'} | {len(TABLE_HEADER_3)*'-'}"
@@ -95,3 +112,4 @@ if __name__ == "__main__":
             f"{optimization.ljust(len(TABLE_HEADER_1))} | "
             + f"{str(executable_size).ljust(len(TABLE_HEADER_2))} | {executable_runtime}"
         )
+    plt.show()
