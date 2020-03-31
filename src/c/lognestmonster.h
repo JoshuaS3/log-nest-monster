@@ -310,7 +310,9 @@ void lnm_registry_push(lnmItem item) {
 
 void lnm_registry_free() {
 	lnm_registry_update();
-	for (uint32_t iter = 0; iter < lnm_registered_items->length;) {
+	while (lnm_registered_items->length > 0) {
+		// free last item
+		// this allows lnm_pushable_free to pop instead of shuffling indices
 		lnm_free_item(lnm_registered_items->frame[lnm_registered_items->length-1]);
 	}
 	lnm_pushable_realloc(lnm_registered_items);
@@ -553,6 +555,7 @@ lnmItem lnmEventS(const char * tag, enum lnmVerbosityLevel verbosity, const char
 #ifdef LNM_DEBUG
 #include <inttypes.h>
 
+
 void lnm_debug_tabs(int tab_count) {
 	for (int i = 0; i < tab_count; i++) {
 		printf("  ");
@@ -564,7 +567,6 @@ void lnm_debug_parse_item(lnmItem item, int tab_count) {
 	if (lnm_item_type(item) == LNM_STATEMENT) {
 		lnm_log_statement * statement = (lnm_log_statement *) item;
 		lnm_debug_tabs(tab_count);
-
 		char * verbosity;
 		switch (statement->verbosity) {
 			case 0:
@@ -586,7 +588,6 @@ void lnm_debug_parse_item(lnmItem item, int tab_count) {
 				verbosity = "ERROR";
 				break;
 		}
-
 		printf("%" PRIu64 " (%s) :: %s\n", statement->timestamp, verbosity, statement->log);
 	} else if (lnm_item_type(item) == LNM_EVENT) {
 		lnm_log_event * event = (lnm_log_event *) item;
@@ -621,6 +622,8 @@ void lnm_debug_parse_queue(lnmQueue queue) {
 	}
 	printf("]\n");
 }
+
+
 #endif  // LNM_DEBUG
 #endif  // LNM_INIT
 
