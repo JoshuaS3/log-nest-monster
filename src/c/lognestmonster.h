@@ -66,7 +66,7 @@ void lnmEventPushS(lnmItem event, enum lnmVerbosityLevel verbosity, const char *
 
 #ifdef LNM_ALL  // expose private utilities
 
-// type definitions
+// struct type definitions
 typedef struct lnm_pushable lnm_pushable;
 typedef struct lnm_log_event lnm_log_event;
 typedef struct lnm_log_statement lnm_log_statement;
@@ -211,25 +211,23 @@ void lnm_pushable_free(lnm_pushable * pushable) {
 
 
 typedef struct lnm_log_event {
-	// word 1, 1 byte data 7 bytes padding
-	uint8_t        type:1;      // used internally; 0 = statement, 1 = event
-	uint8_t        pushed:1;    // whether or not this log item has been pushed
-	// word 2, 8 bytes data
-	char *         tag;         // null-terminated tag string
-	// word 3, 8 bytes data
-	lnm_pushable * pushable;    // pushable of lnmItems
+	enum LNM_ITEM_TYPE type:1;   // used internally; 0 = statement, 1 = event
+	uint8_t            pushed:1; // whether or not this log item has been pushed
+
+	char * tag; // null-terminated tag string
+
+	lnm_pushable * pushable; // pushable of lnmItems
 } lnm_log_event;
 
 
 typedef struct lnm_log_statement {
-	// word 1, 1 byte data 7 bytes padding
-	uint8_t  type:1;       // used internally; 0 = statement, 1 = event
-	uint8_t  pushed:1;     // whether or not this log item has been pushed
-	uint8_t  verbosity:3;  // lnmVerbosityLevel
-	// word 2, 8 bytes data
-	uint64_t timestamp;    // 64-bit millisecond timestamp
-	// word 3, 8 bytes data
-	char *   log;          // null-terminated message string
+	enum LNM_ITEM_TYPE  type:1;      // used internally; 0 = statement, 1 = event
+	uint8_t             pushed:1;    // whether or not this log item has been pushed
+	uint8_t             verbosity:3; // lnmVerbosityLevel
+
+	uint64_t timestamp; // 64-bit millisecond timestamp
+
+	char * log; // null-terminated message string
 } lnm_log_statement;
 
 
