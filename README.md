@@ -11,8 +11,8 @@
   <a href="https://github.com/JoshuaS3/lognestmonster/tree/dev">
     <img src="https://img.shields.io/badge/version-(WIP) 0.3.0-informational?style=flat-square"/>
   </a>
-  <a href="https://github.com/JoshuaS3/lognestmonster/blob/dev/src/c/lognestmonster.h">
-    <img src="https://img.shields.io/github/size/joshuas3/lognestmonster/src/c/lognestmonster.h?label=header%20size&style=flat-square"/>
+  <a href="https://github.com/JoshuaS3/lognestmonster/blob/dev/src/lognestmonster.h">
+    <img src="https://img.shields.io/github/size/joshuas3/lognestmonster/src/lognestmonster.h?label=header%20size&style=flat-square"/>
   </a>
   <a href="https://app.codacy.com/manual/JoshuaS3/lognestmonster/dashboard">
     <img src="https://img.shields.io/codacy/grade/15048b0c7728497394651e295d61746b/dev?logo=codacy&style=flat-square"/>
