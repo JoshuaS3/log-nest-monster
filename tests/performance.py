@@ -11,14 +11,14 @@ PROJECT_PATH = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 )
 BIN_PATH = os.path.join(PROJECT_PATH, "bin")
-INCLUDE_PATH = os.path.join(PROJECT_PATH, "src/c")
+INCLUDE_PATH = os.path.join(PROJECT_PATH, "src")
 HEADER_ONLY = os.path.join(PROJECT_PATH, "tests/header_only.c")
 HEADER_PERFORMANCE = os.path.join(PROJECT_PATH, "tests/header_memory.c")
 
 CC = "gcc"
 CFLAGS = ["-std=c11", "-pedantic", "-Wall", "-Wextra", "-Werror"]
 COUTFLAG = "-o"
-COPTIMIZATIONS = ["-O0", "-O1", "-O2", "-O3", "-Os"]
+COPTIMIZATIONS = ["-O0", "-O1", "-O2", "-O3", "-Os", "-Ofast"]
 CINCLUDES = ["-I", INCLUDE_PATH]
 
 TABLE_HEADER_1 = "Optimization Level"
@@ -26,7 +26,7 @@ TABLE_HEADER_2 = "Header Binary Size (in bytes)"
 TABLE_HEADER_3 = "Memory Test Runtime (in µs)"
 
 RE_TRIAL_TIME = r"time elapsed \(us\): (\d*)"
-TRIAL_PASSES = 200
+TRIAL_PASSES = 100
 
 
 def cc_compile(out_file: str, in_files: list, optimization_level: str = "-O0"):
@@ -93,7 +93,7 @@ if __name__ == "__main__":
             trial_output = execute_file(header_unit_out)
             trial_time = re.search(RE_TRIAL_TIME, trial_output).group(1)
             trial_runtimes.append(int(trial_time))
-        plt.plot(trial_runtimes)
+        plt.plot(sorted(trial_runtimes))
         trial_runtimes.sort()
         trial_median = int(median(trial_runtimes))
         trial_mid = int(TRIAL_PASSES/2)
