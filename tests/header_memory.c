@@ -21,16 +21,18 @@
 
 int main() {
 	long t1 = lnm_getus();
+	lnmQueue queue = lnmQueueInit("memtest", "/dev/null");
 
 	lnmItem lastEvent = NULL;
-	for (int iter = 0; iter < 25000; iter++) {
+	for (int iter = 0; iter < 50000; iter++) {
 		uint64_t time = lnm_getus();
 		int type = time % 5 == 0 ? LNM_EVENT : LNM_STATEMENT;
 		if (type == LNM_STATEMENT) {
 			char message[25];
 			snprintf(message, 25, "New statement #%i", iter);
 			if (lastEvent == NULL) {
-				lnmStatement(lnmInfo, message);
+				lnmItem statement = lnmStatement(lnmInfo, message);
+				lnmQueuePush(queue, statement);
 			} else {
 				lnmEventPushS(lastEvent, lnmInfo, message);
 			}
@@ -39,6 +41,7 @@ int main() {
 			snprintf(tag, 20, "New event #%i", iter);
 			if (lastEvent == NULL || time % 7 == 0) {
 				lastEvent = lnmEvent(tag);
+				lnmQueuePush(queue, lastEvent);
 			} else {
 				lnmItem new_event = lnmEvent(tag);
 				lnmEventPush(lastEvent, new_event);
@@ -47,6 +50,8 @@ int main() {
 		}
 	}
 	lnm_registry_free();
-	printf("time elapsed (us): %lu\n", lnm_getus() - t1);
+	lnm_free_queue(queue);
+	long elapsed = lnm_getus() - t1;
+	printf("time elapsed (us): %lu\n", elapsed);
 	return 0;
 }

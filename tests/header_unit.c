@@ -61,7 +61,10 @@ int main(void) {
 	lnmItem nested_event = lnmEvent("NESTED_EVENT");
 	lnmEventPush(event, nested_event);
 	lnmEventPushS(nested_event, lnmDebug, "Each event is assigned a tag to make querying easy.");
-	lnmEventPushS(nested_event, lnmWarning, "Events can hold up to 2^16 (65536) items. Messages also have a 2^16 maximum message length.");
+	lnmItem deep_event = lnmEventS("DEEP_EVENT", lnmInfo, "Events can be as deep as you want, as long as you don't run out of memory.");
+	lnmEventPush(nested_event, deep_event);
+	lnmEventPushS(nested_event, lnmWarning, "Events have a capacity of 2^31 (2147483648) items.");
+	lnmEventPushS(nested_event, lnmError, "Messages have a maximum message length of 2^16 (65536) characters.");
 	printf("created log tree\n");
 	printf("\n\n");
 
@@ -91,7 +94,8 @@ int main(void) {
 
 	printf("tests finished\n");
 	printf("----------------------------\n");
-	printf("time elapsed (us): %lu\n", lnm_getus() - t1);
+	unsigned long long elapsed = lnm_getus() - t1;
+	printf("time elapsed (us): %llu\n", elapsed);
 
 	return 0;
 }

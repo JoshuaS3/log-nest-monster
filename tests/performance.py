@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3
 """Compiles tests/header_only.c to test size, tests/header_unit*.c to test speed"""
 
 import sys
@@ -26,10 +26,10 @@ TABLE_HEADER_2 = "Header Binary Size (in bytes)"
 TABLE_HEADER_3 = "Memory Test Runtime (in µs)"
 
 RE_TRIAL_TIME = r"time elapsed \(us\): (\d*)"
-TRIAL_PASSES = 100
+TRIAL_PASSES = 200
 
 
-def gcc_compile(out_file: str, in_files: list, optimization_level: str = "-O0"):
+def cc_compile(out_file: str, in_files: list, optimization_level: str = "-O0"):
     """Uses gcc subprocess to compile at a set optimization level"""
     process_command = (
         [CC]
@@ -41,10 +41,10 @@ def gcc_compile(out_file: str, in_files: list, optimization_level: str = "-O0"):
     )
     process = subprocess.run(process_command, stdout=sys.stdout, stderr=sys.stderr)
     if process.returncode:
-        print("[gcc_compile] error in compilation")
+        print("[cc_compile] error in compilation")
         return 0
     else:
-        print(f"[gcc_compile] finished compiling to {out_file}")
+        print(f"[cc_compile] finished compiling to {out_file}")
     return 1
 
 
@@ -67,12 +67,13 @@ if __name__ == "__main__":
     else:
         print("[main] created bin/")
     print("[main] compiling...")
+    print(f"[main/compile] using compiler {CC}")
     for optimization in COPTIMIZATIONS:
         header_only_out = os.path.join(BIN_PATH, f"c-header-only{optimization}")
-        if not gcc_compile(header_only_out, [HEADER_ONLY], optimization):
+        if not cc_compile(header_only_out, [HEADER_ONLY], optimization):
             sys.exit()
         header_unit_out = os.path.join(BIN_PATH, f"c-performance{optimization}")
-        if not gcc_compile(header_unit_out, [HEADER_PERFORMANCE], optimization):
+        if not cc_compile(header_unit_out, [HEADER_PERFORMANCE], optimization):
             sys.exit()
     print("[main] getting filesize data of header_only binaries")
     EXECUTABLE_SIZES = {}
