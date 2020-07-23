@@ -2,7 +2,7 @@ name: C Header Unit Tests
 on:
     push:
         paths:
-            - 'src/c/*'
+            - 'src/*'
             - 'tests/'
             - 'test'
 jobs:
