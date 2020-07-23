@@ -43,7 +43,11 @@ extern "C" {
 #include <stdint.h>  // necessary include for type declaration
 
 
-enum lnmVerbosityLevel {lnmInfo, lnmDebug, lnmVerbose, lnmVeryVerbose, lnmWarning, lnmError};
+enum lnmVerbosityLevel {
+	lnmInfo = 0x0, lnmDebug = 0x1,
+	lnmVerbose = 0x2, lnmVeryVerbose = 0x3,
+	lnmWarning = 0x4, lnmError = 0x5
+};
 typedef uint8_t * lnmItem;
 typedef uint8_t * lnmQueue;
 
@@ -132,16 +136,17 @@ typedef struct lnm_pushable {
 
 void lnm_pushable_realloc(lnm_pushable * pushable) {
 	if (pushable->length > pushable->capacity) {
-		if (pushable->capacity > UINT32_MAX / 2) {
-			lnm_abort("lnm_pushable_realloc", "pushable can't surpass max capacity of 2^16");
+		if (pushable->capacity == 2147483648) {
+			lnm_abort("lnm_pushable_realloc", "pushable can't surpass max capacity of 2^31");
 		}
-		pushable->frame = realloc(pushable->frame, sizeof(lnmItem) * (pushable->capacity *= 2));
+		pushable->frame = realloc(pushable->frame, sizeof(lnmItem) * (pushable->capacity <<= 1));
 		if (pushable->frame == NULL) {
 			lnm_abort("lnm_pushable_realloc", "call to realloc() returned NULL");
 		}
-	} else if (pushable->length < (pushable->capacity / 2)) {
-		while (pushable->length < (pushable->capacity / 2) && pushable->capacity > 8) {
-			pushable->capacity /= 2;
+	} else if (pushable->capacity > 8 && pushable->length <= (pushable->capacity >> 1)) {
+		while (pushable->capacity > 8 && pushable->length <= (pushable->capacity >> 1)) {
+			// decrease array's capacity
+			pushable->capacity >>= 1; // divide by 2
 		}
 		pushable->frame = realloc(pushable->frame, sizeof(lnmItem) * (pushable->capacity));
 		if (pushable->frame == NULL) {
@@ -181,7 +186,7 @@ void lnm_pushable_pop(lnm_pushable * pushable) {
 
 void lnm_pushable_remove(lnm_pushable * pushable, uint32_t index) {
 	if (index >= pushable->length) {
-		lnm_abort("lnm_pushable_remove", "attempt to remove index out of pushable bounds");
+		lnm_abort("lnm_pushable_remove", "attempt to remove out of bounds index from pushable");
 	}
 	if (index == pushable->length - 1) {
 		lnm_pushable_pop(pushable);
@@ -209,10 +214,8 @@ typedef struct lnm_log_event {
 	// word 1, 1 byte data 7 bytes padding
 	uint8_t        type:1;      // used internally; 0 = statement, 1 = event
 	uint8_t        pushed:1;    // whether or not this log item has been pushed
-
 	// word 2, 8 bytes data
 	char *         tag;         // null-terminated tag string
-
 	// word 3, 8 bytes data
 	lnm_pushable * pushable;    // pushable of lnmItems
 } lnm_log_event;
@@ -222,11 +225,9 @@ typedef struct lnm_log_statement {
 	// word 1, 1 byte data 7 bytes padding
 	uint8_t  type:1;       // used internally; 0 = statement, 1 = event
 	uint8_t  pushed:1;     // whether or not this log item has been pushed
-	uint8_t  verbosity:3;  // lnmVerbosityLevel, 0-5
-
+	uint8_t  verbosity:3;  // lnmVerbosityLevel
 	// word 2, 8 bytes data
 	uint64_t timestamp;    // 64-bit millisecond timestamp
-
 	// word 3, 8 bytes data
 	char *   log;          // null-terminated message string
 } lnm_log_statement;
@@ -252,7 +253,7 @@ uint64_t lnm_getus(void) {
 	uint64_t us;
 	struct timeval lnm_current_time;
 	gettimeofday(&lnm_current_time, NULL);
-	us = (lnm_current_time.tv_sec*1000000+lnm_current_time.tv_usec);
+	us = (lnm_current_time.tv_sec * 1000000ULL + lnm_current_time.tv_usec);
 	return us;
 }
 #elif defined(_WIN32) || defined(__WINDOWS__)
@@ -268,7 +269,7 @@ uint64_t lnm_getus(void) {
 	us = us << 32;
 	us |= lnm_win32_filetime.dwLowDateTime;
 	// convert to microseconds
-	us /= 10;
+	us /= 10ULL; // is there a better way to do this?
 	// convert from time since Windows NT epoch to time since Unix epoch
 	us -= 11644473600000000ULL;
 	return us;
@@ -331,7 +332,7 @@ void lnm_registry_flush_item(lnmItem item) {
 // core library utilities
 
 
-int lnm_item_type(lnmItem item) {
+enum LNM_ITEM_TYPE lnm_item_type(lnmItem item) {
 	return ((lnm_log_statement *)item)->type;
 }
 
@@ -394,10 +395,9 @@ void lnm_free_item(lnmItem item) {
 
 void lnm_free_queue(lnmQueue queue) {
 	lnm_queue * queue_cast = (lnm_queue *)queue;
-	for (uint32_t iter = 0; iter < queue_cast->pushable->length; iter++) {
-		lnm_free_item(queue_cast->pushable->frame[iter]);
-		lnm_pushable_remove(queue_cast->pushable, iter);
-		iter--;
+	while (queue_cast->pushable->length > 0) {
+		lnm_free_item(queue_cast->pushable->frame[queue_cast->pushable->length - 1]);
+		lnm_pushable_pop(queue_cast->pushable);
 	}
 }
 
@@ -415,8 +415,8 @@ lnmQueue lnmQueueInit(const char * name, const char * out_path) {
 	if (new_queue == NULL) {
 		lnm_abort("lnmQueueInit", "call to calloc() returned NULL");
 	}
-	new_queue->name = malloc(strlen(name)+1);
-	new_queue->out_path = malloc(strlen(out_path)+1);
+	new_queue->name = malloc(strlen(name) + 1);
+	new_queue->out_path = malloc(strlen(out_path) + 1);
 	if (new_queue->name == NULL || new_queue->out_path == NULL) {
 		lnm_abort("lnmQueueInit", "call to malloc() returned NULL");
 	}
@@ -451,8 +451,8 @@ void lnmQueuePush(lnmQueue queue, lnmItem item) {
 	if (queue == NULL || item == NULL) {
 		lnm_abort("lnmQueuePush", "cannot perform operation on NULL arguments");
 	}
-	lnm_log_statement * statement = (lnm_log_statement *)item;
-	if (statement->pushed == 1) {
+	lnm_log_statement * item_cast = (lnm_log_statement *)item;
+	if (item_cast->pushed == 1) {
 		lnm_abort("lnmQueuePush", "attempt to push an already-pushed log item");
 	}
 	// flush out of registry
@@ -476,6 +476,9 @@ lnmItem lnmStatement(enum lnmVerbosityLevel verbosity, const char * message) {
 	new_statement->timestamp = lnm_getus();
 	// enforce string lengths
 	int message_len = strlen(message) + 1;
+	if (message_len > UINT16_MAX) {
+		lnm_abort("lnmStatement", "length of statement message exceeds 2^16 characters");
+	}
 	// copy message to new_statement->log
 	new_statement->log = malloc(message_len);
 	if (new_statement->log == NULL) {
@@ -499,8 +502,12 @@ lnmItem lnmEvent(const char * tag) {
 	new_event->type = LNM_EVENT;
 	new_event->pushed = 0;
 	new_event->pushable = lnm_new_pushable();
-	// copy tag to event
+	// enforce string lengths
 	int tag_len = strlen(tag) + 1;
+	if (tag_len > UINT8_MAX) {
+		lnm_abort("lnmEvent", "length of event tag exceeds 256 characters");
+	}
+	// copy tag to event
 	new_event->tag = malloc(tag_len);
 	if (new_event->tag == NULL) {
 		lnm_abort("lnmEvent", "call to malloc() returned NULL");
