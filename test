@@ -1,120 +1,122 @@
 #!/usr/bin/env bash
 
+CC="gcc"
+
 success() {
-	echo -e "\033[92m\033[1m\033[7m${@}\033[0m"
+    echo -e "\033[92m\033[1m\033[7m${@}\033[0m"
 }
 
 success_lite() {
-	echo -e "\033[92m${@}\033[0m"
+    echo -e "\033[92m${@}\033[0m"
 }
 
 error() {
-	echo -e "\033[91m\033[7m\033[1m${@}\033[0m"
+    echo -e "\033[91m\033[7m\033[1m${@}\033[0m"
 }
 
 warn() {
-	echo -e "\033[93m\033[1m\033[7m${@}\033[0m"
+    echo -e "\033[93m\033[1m\033[7m${@}\033[0m"
 }
 
 warn_lite() {
-	echo -e "\033[93m${@}\033[0m"
+    echo -e "\033[93m${@}\033[0m"
 }
 
 handle() {
-	echo $1
-	$1
-	if [ $? -ne 0 ]
-	then
-		error "Error in test. Exiting..."
-		exit 1
-	else
-		success_lite "Success in test."
-	fi
+    echo $1
+    $1
+    if [ $? -ne 0 ]
+    then
+        error "Error in test. Exiting..."
+        exit 1
+    else
+        success_lite "Success in test."
+    fi
 }
 
 help() {
-	echo "Usage: ./test [help] [c_unit] [parser] [lint] [performance] [memory] [clean]"
+    echo "Usage: ./test [help] [c_unit] [parser] [lint] [performance] [memory] [clean]"
 }
 
 c_unit() {
-	warn "Running C unit test chain"
-	echo
+    warn "Running C unit test chain"
+    echo
 
-	# Compile C unit tests
-	warn_lite "Making C header unit test"
-	mkdir -p bin
-	handle "gcc -std=c11 -pedantic -Wall -Wextra -Werror -o bin/c -I src tests/header_unit.c tests/header_unit_2.c"
-	echo
+    # Compile C unit tests
+    warn_lite "Making C header unit test"
+    mkdir -p bin
+    handle "$CC -std=c11 -pedantic -Wall -Wextra -Werror -o bin/c -I src tests/header_unit.c tests/header_unit_2.c"
+    echo
 
-	warn_lite "Running C header unit test"
-	handle bin/c
-	echo
+    warn_lite "Running C header unit test"
+    handle bin/c
+    echo
 
-	success "Finished"
+    success "Finished"
 }
 
 parser() {
-	warn "Compiling parser"
-	echo
+    warn "Compiling parser"
+    echo
 
-	warn_lite "Running compiler"
-	mkdir -p bin
-	FILES=$(find src/lnm/*.c)
-	handle "gcc -std=c11 -pedantic -Wall -Wextra -Werror -o bin/parser -I src $FILES -lncurses"
-	echo
+    warn_lite "Running compiler"
+    mkdir -p bin
+    FILES=$(find src/lnm/*.c)
+    handle "$CC -std=c11 -pedantic -Wall -Wextra -Werror -o bin/parser -I src $FILES -lncurses"
+    echo
 
-	success "Finished"
+    success "Finished"
 }
 
 lint() {
-	warn "Running lint test"
-	echo
+    warn "Running lint test"
+    echo
 
-	find . -name "*.c" -print0 | while read -d $'\0' file
-	do
-		warn_lite "Executing gcc --syntax-only $file"
-		handle "gcc -std=c11 --syntax-only -pedantic -Wall -Wextra -Werror -I src $file"
-		echo
-	done
+    find . -name "*.c" -print0 | while read -d $'\0' file
+    do
+        warn_lite "Executing gcc --syntax-only $file"
+        $CC -std=c11 --syntax-only -pedantic -Wall -Wextra -I src $file
+        echo
+    done
 
-	success "Finished"
+    success "Finished"
 }
 
 performance() {
-	warn "Running performance test"
-	echo
+    warn "Running performance test"
+    echo
 
-	warn_lite "Compiling and running performance tests"
-	handle tests/performance.py
-	echo
+    warn_lite "Compiling and running performance tests"
+    handle tests/performance.py
+    echo
 
-	success "Finished"
+    success "Finished"
 }
 
 memory() {
-	warn "Running memory leak test"
-	echo
+    warn "Running memory leak test"
+    echo
 
-	warn_lite "Compiling"
-	handle "gcc -std=c11 -pedantic -Wall -Wextra -Werror -o bin/c-memory -I src tests/header_memory.c"
-	echo
+    warn_lite "Compiling"
+    handle "$CC -std=c11 -pedantic -Wall -Wextra -Werror -o bin/c-memory -I src tests/header_memory.c"
+    echo
 
-	warn_lite "Running"
-	handle bin/c-memory
-	echo
+    warn_lite "Running"
+    handle bin/c-memory
+    echo
 
-	success "Finished"
+    success "Finished"
 }
 
 clean() {
-	warn "Cleaning"
-	echo
-	rm -r bin/
+    warn "Cleaning"
+    echo
+    rm -r bin/
 }
 
 for test in "$@"
 do
-	$test
+    $test
 done
 
 echo -e "finished: ${SECONDS} seconds"
